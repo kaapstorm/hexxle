@@ -3,6 +3,6 @@
 # Server to publish the site to (host:directory).
 remote = "user@example.com:/srv/hexxle"
 
-# Word list used by `hexxle solve` and `hexxle check`, one word per
+# Word list used by `hexxle solve`, `check` and `publish`, one word per
 # line. A relative path is relative to this file.
 dictionary = "/usr/share/dict/words"

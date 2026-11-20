@@ -10,6 +10,8 @@ from hexxle.core.paths import find_words
 from hexxle.core.puzzle import parse_board_only
 from hexxle.dictionary import load_dictionary
 from hexxle.errors import HexxleError
+from hexxle.publish import BatchRunner, PublishError, deploy, publish
+from hexxle.sftp import run_sftp_batch
 from hexxle.site import serve
 
 # Errors in the user's input or setup: reported in one line, while any
@@ -22,6 +24,7 @@ class Context:
     """What the commands use besides their arguments."""
 
     config_path: Path
+    run_batch: BatchRunner
 
     def config(self) -> dict:
         return load_config(self.config_path)
@@ -29,12 +32,17 @@ class Context:
 
 def main(
     argv: list[str] | None = None,
+    run_batch: BatchRunner = run_sftp_batch,
     config_path: Path = CONFIG_PATH,
 ) -> int:
     args = build_parser().parse_args(argv)
-    context = Context(config_path)
+    context = Context(config_path, run_batch)
     try:
         return args.handler(args, context)
+    except PublishError as error:
+        for message in error.errors:
+            _print_error(message)
+        return 1
     except USER_ERRORS as error:
         _print_error(error)
         return 1
@@ -45,6 +53,10 @@ def build_parser() -> argparse.ArgumentParser:
     dictionary_option.add_argument(
         '-d', '--dictionary', type=Path, metavar='DICT',
         help='word list (default: from hexxle.toml)')
+    remote_option = argparse.ArgumentParser(add_help=False)
+    remote_option.add_argument(
+        '--remote', metavar='HOST:PATH',
+        help='where to upload to (default: from hexxle.toml)')
 
     parser = argparse.ArgumentParser(prog='hexxle')
     commands = parser.add_subparsers(dest='command', required=True)
@@ -70,6 +82,19 @@ def build_parser() -> argparse.ArgumentParser:
             name, help=text, parents=[dictionary_option])
         sub.add_argument('puzzle', type=Path, metavar='PUZZLE')
         sub.set_defaults(handler=handler)
+
+    publish_parser = commands.add_parser(
+        'publish', help='upload a puzzle and a regenerated index',
+        parents=[dictionary_option, remote_option])
+    publish_parser.add_argument('puzzle', type=Path, metavar='PUZZLE')
+    publish_parser.add_argument(
+        '--force', action='store_true',
+        help='replace a puzzle that is already published')
+    publish_parser.set_defaults(handler=run_publish)
+
+    deploy_parser = commands.add_parser(
+        'deploy', help='upload the game itself', parents=[remote_option])
+    deploy_parser.set_defaults(handler=run_deploy)
     return parser
 
 
@@ -101,6 +126,23 @@ def run_check(args: argparse.Namespace, context: Context) -> int:
     return 1 if errors else 0
 
 
+def run_publish(args: argparse.Namespace, context: Context) -> int:
+    remote = _remote(args, context)
+    dictionary = _dictionary(args, context)
+    warnings = publish(args.puzzle, remote, dictionary, force=args.force,
+                       run_batch=context.run_batch)
+    _print_warnings(warnings)
+    print('published %s' % args.puzzle.stem)
+    return 0
+
+
+def run_deploy(args: argparse.Namespace, context: Context) -> int:
+    remote = _remote(args, context)
+    deploy(remote, run_batch=context.run_batch)
+    print('deployed to %s' % remote)
+    return 0
+
+
 def _dictionary(args: argparse.Namespace, context: Context) -> set[str]:
     """The ``-d`` word list, or else the one in the settings file.
 
@@ -110,6 +152,14 @@ def _dictionary(args: argparse.Namespace, context: Context) -> set[str]:
     if path is None:
         path = context.config_path.parent / context.config()['dictionary']
     return load_dictionary(path)
+
+
+def _remote(args: argparse.Namespace, context: Context) -> str:
+    """The ``--remote`` value, or else the one in the settings file."""
+    remote = args.remote or context.config()['remote']
+    if not remote:
+        raise HexxleError('no remote configured')
+    return remote
 
 
 def _print_error(message: object) -> None:

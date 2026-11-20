@@ -6,14 +6,14 @@ import socket
 import tempfile
 from pathlib import Path
 
-from testsweet import params, test
+from testsweet import catch_exceptions, params, test
 
 import hexxle.site
 from hexxle.cli import main
 from hexxle.config import CONFIG_PATH
 from tests.core.examples import EXAMPLE
 from tests.fixture_paths import EXAMPLE_PATH, FIXTURES, WORDS_PATH
-
+from tests.tool.fake_sftp import FakeSftp, RefusingSftp
 # A settings file that does not exist, so tests never read the real one.
 NO_SETTINGS = FIXTURES / 'no-such-hexxle.toml'
 
@@ -22,11 +22,17 @@ SOLVED = (' T A U\nS C X L\n S E I\nE D C N\n\n---\n'
 BOARD = ' T A U\nS C X L\n S E I\nE D C N\n'
 
 
-def run(argv, config_path=NO_SETTINGS):
+def no_uploads(host, commands):
+    raise AssertionError('unexpected upload to %s' % host)
+
+
+def run(argv, run_batch=no_uploads, config_path=NO_SETTINGS):
     out = io.StringIO()
     err = io.StringIO()
     with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
-        code = main([str(arg) for arg in argv], config_path=config_path)
+        code = main(
+            [str(arg) for arg in argv],
+            run_batch=run_batch, config_path=config_path)
     return code, out.getvalue(), err.getvalue()
 
 
@@ -103,6 +109,117 @@ def the_dictionary_setting_is_relative_to_the_settings_file():
 def settings_are_read_from_the_repository_root_by_default():
     default = inspect.signature(main).parameters['config_path'].default
     assert default == CONFIG_PATH
+
+
+@test
+@params([
+    (['publish', EXAMPLE_PATH, '-d', WORDS_PATH],),
+    (['deploy'],),
+])
+def a_missing_remote_is_an_error(argv):
+    code, out, err = run(argv)
+    assert code == 1
+    assert err == 'error: no remote configured\n'
+
+
+@test
+def publish_uploads_and_prints_the_identifier_and_warnings():
+    fake = FakeSftp()
+    code, out, err = run(
+        ['publish', EXAMPLE_PATH, '-d', WORDS_PATH,
+         '--remote', 'host:/srv/x'],
+        run_batch=fake)
+    warnings = err.splitlines()
+    assert code == 0
+    assert out == 'published 2026-11-20\n'
+    assert len(warnings) == 2
+    assert all(line.startswith('warning: ') for line in warnings)
+    assert fake.uploaded['/srv/x/puzzles/2026-11-20.txt'] == EXAMPLE
+
+
+@test
+@params([([], 1), (['--force'], 0)])
+def publish_replaces_a_puzzle_only_with_force(flags, expected_code):
+    fake = FakeSftp('/srv/x/puzzles/2026-11-20.txt\n')
+    code, out, err = run(
+        ['publish', EXAMPLE_PATH, '-d', WORDS_PATH,
+         '--remote', 'host:/srv/x'] + flags,
+        run_batch=fake)
+    replaced = '/srv/x/puzzles/2026-11-20.txt' in fake.uploaded
+    assert code == expected_code
+    assert replaced == (expected_code == 0)
+
+
+@test
+@params([
+    ([], 'settings-host'),
+    (['--remote', 'flag-host:/srv/b'], 'flag-host'),
+])
+def the_remote_option_overrides_the_settings_file(flags, expected_host):
+    fake = FakeSftp()
+    with tempfile.TemporaryDirectory() as tmp:
+        settings = Path(tmp) / 'hexxle.toml'
+        settings.write_text('remote = "settings-host:/srv/a"\n')
+        code, out, err = run(
+            ['publish', EXAMPLE_PATH, '-d', WORDS_PATH] + flags,
+            run_batch=fake, config_path=settings)
+    hosts = {host for host, _ in fake.calls}
+    assert code == 0
+    assert hosts == {expected_host}
+
+
+@test
+def publish_prints_each_error_in_the_puzzle():
+    fake = FakeSftp()
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / 'puzzle.txt'
+        path.write_text(EXAMPLE.replace('TAXI', 'TAXIS'))
+        code, out, err = run(
+            ['publish', path, '-d', WORDS_PATH, '--remote', 'host:/x'],
+            run_batch=fake)
+    lines = err.splitlines()
+    assert code == 1
+    assert out == ''
+    assert len(lines) == 2
+    assert all(line.startswith('error: ') for line in lines)
+    assert 'puzzle.txt' in lines[0]
+    assert 'TAXIS' in lines[1]
+    assert fake.calls == []
+
+
+@test
+@params([
+    (['publish', EXAMPLE_PATH, '-d', WORDS_PATH],),
+    (['deploy'],),
+])
+def an_sftp_failure_is_an_error(argv):
+    fake = RefusingSftp()
+    code, out, err = run(argv + ['--remote', 'host:/srv/x'], run_batch=fake)
+    assert code == 1
+    assert out == ''
+    assert err == 'error: Connection refused\n'
+
+
+@test
+def deploy_uploads_the_site():
+    fake = FakeSftp()
+    code, out, err = run(['deploy', '--remote', 'host:/srv/x'],
+                         run_batch=fake)
+    assert code == 0
+    assert out == 'deployed to host:/srv/x\n'
+    assert len(fake.calls) == 1
+    assert '/srv/x/index.html' in fake.uploaded
+
+
+@test
+def a_bug_keeps_its_traceback():
+    def broken(host, commands):
+        raise ValueError('a programming error')
+
+    with catch_exceptions() as caught:
+        run(['deploy', '--remote', 'host:/srv/x'], run_batch=broken)
+    assert len(caught) == 1
+    assert isinstance(caught[0], ValueError)
 
 
 @test
