@@ -1,3 +1,9 @@
+"""The example puzzle, shared by the tests.
+
+``tests/fixtures/puzzles/2026-11-20.txt`` holds the same text (checked
+by ``tests/tool/test_fixtures.py``).
+"""
+
 EXAMPLE = """\
  T A U
 S C X L
