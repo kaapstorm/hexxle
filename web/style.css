@@ -1,24 +1,73 @@
+/* Hexxle: glazed hexagonal tiles, set in lime plaster.
+
+   The tiles are teal glaze with painted serif capitals. A traced tile
+   turns saffron, a tile no word needs any more is left unglazed, and a
+   finished board is rimmed in saffron. Everything else on the page is
+   quiet so the board is the one thing that stands out.
+
+   The boxes above the board have fixed line heights, so the board does
+   not move when their text changes. Tracing restyles tiles only by
+   class, with no transitions or filters, so a pointer move costs no more
+   to paint. */
+
 :root {
-  --ink: #3b2a14;
-  --paper: #fdf8ee;
-  --tile: #f6d27a;
-  --tile-edge: #c9962e;
-  --tile-in-path: #e0892b;
-  --trace: rgba(120, 50, 10, 0.45);
-  --cancel: #b3261e;
-  --muted: #8a7a62;
+  --plaster: #e9ece6;
+  --ink: #18302d;
+  --muted: #5b6e6a;
+  --glaze: #1e6b63;
+  --glaze-edge: #114640;
+  --glaze-letter: #f6f2e3;
+  --saffron: #edb238;
+  --saffron-edge: #b27a12;
+  --saffron-letter: #1d2523;
+  --biscuit: #dde2db;
+  --biscuit-edge: #a9b7b2;
+  --biscuit-letter: #748884;
+  --trace: rgba(17, 32, 30, 0.5);
+  --oxide: #b03a21;
+  --glaze-ink: #1e6b63;
+  --gold-ink: #8f5f06;
+  --panel: #f4f6f1;
+  --shadow: rgba(17, 40, 37, 0.22);
+  --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino,
+    'URW Palladio L', P052, 'Book Antiqua', Georgia, serif;
+  --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   /* Vertical space taken by everything above and just below the board
      (heading, title, word, message, progress); the found words may
      scroll below. */
   --chrome-height: 14rem;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --plaster: #0f1d1b;
+    --ink: #e2e9e4;
+    --muted: #93a7a2;
+    --glaze: #237a70;
+    --glaze-edge: #3f9d91;
+    --glaze-letter: #f8f5ea;
+    --saffron: #f0b940;
+    --saffron-edge: #ffd77a;
+    --saffron-letter: #172220;
+    --biscuit: #172b28;
+    --biscuit-edge: #2f4a46;
+    --biscuit-letter: #7d938e;
+    --trace: rgba(14, 26, 24, 0.6);
+    --oxide: #f07a5c;
+    --glaze-ink: #5fbcae;
+    --gold-ink: #f0b940;
+    --panel: #162825;
+    --shadow: rgba(0, 0, 0, 0.5);
+  }
 }
 
 html,
 body {
   margin: 0;
-  background: var(--paper);
+  background: var(--plaster);
   color: var(--ink);
-  font-family: system-ui, sans-serif;
+  font-family: var(--sans);
   overscroll-behavior: none;
 }
 
@@ -30,16 +79,42 @@ main {
   padding: 0 0.5rem;
 }
 
+/* The heading stays centred; the Puzzles button sits at its right so
+   the board below does not move. */
+header {
+  position: relative;
+  width: 100%;
+  max-width: 30rem;
+  text-align: center;
+}
+
 h1 {
+  display: flex;
+  gap: 0.3em;
+  align-items: center;
+  justify-content: center;
   margin: 0.75rem 0 0;
-  font-size: 1.25rem;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  /* Fixed, so the board does not move when the text changes. */
+  line-height: 1.6875rem;
+}
+
+/* A single glazed tile as the mark. */
+h1::before {
+  content: '';
+  width: 0.8em;
+  height: 0.92em;
+  background: var(--glaze);
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
 }
 
 #title,
 #progress {
   margin: 0.25rem 0 0;
+  color: var(--muted);
   font-size: 0.95rem;
   line-height: 1.25rem;
 }
@@ -49,14 +124,30 @@ h1 {
   min-height: 2rem;
   margin: 0.5rem 0;
   font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: 0.15em;
   line-height: 2rem;
 }
 
+#word {
+  font-family: var(--serif);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
 #word.cancelling {
-  color: var(--cancel);
+  color: var(--oxide);
   text-decoration: line-through;
+  text-decoration-thickness: 0.12em;
+}
+
+#message {
+  color: var(--muted);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+#message[data-outcome="found"],
+#message[data-outcome="bonus"] {
+  color: var(--glaze-ink);
 }
 
 /* Fill the width, but never so tall that the board leaves the screen.
@@ -74,38 +165,54 @@ h1 {
 }
 
 #board polygon {
-  fill: var(--tile);
-  stroke: var(--tile-edge);
+  fill: var(--glaze);
+  stroke: var(--glaze-edge);
   stroke-width: 2;
-}
-
-#board .in-path polygon {
-  fill: var(--tile-in-path);
-}
-
-#board .dimmed polygon {
-  fill: var(--paper);
-}
-
-#board .dimmed .letter {
-  fill: var(--muted);
-}
-
-#board .dimmed.in-path polygon {
-  fill: var(--tile-in-path);
+  stroke-linejoin: round;
 }
 
 #board text {
-  fill: var(--ink);
-  font-weight: 700;
+  fill: var(--glaze-letter);
   text-anchor: middle;
   dominant-baseline: central;
   pointer-events: none;
 }
 
+#board .letter {
+  font-family: var(--serif);
+  font-weight: 700;
+}
+
+/* Hint numbers: small and a little faded, so they read when looked for
+   and stay out of the way otherwise. */
 #board .hint-starts,
 #board .hint-uses {
+  font-family: var(--sans);
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+/* A tile no unfound word needs: left unglazed, letter still legible. */
+#board .dimmed polygon {
+  fill: var(--biscuit);
+  stroke: var(--biscuit-edge);
+}
+
+#board .dimmed text {
+  fill: var(--biscuit-letter);
+}
+
+/* In the path, dimmed or not: bright saffron with dark lettering. */
+#board .in-path polygon,
+#board .dimmed.in-path polygon {
+  fill: var(--saffron);
+  stroke: var(--saffron-edge);
+}
+
+#board .in-path text,
+#board .dimmed.in-path text {
+  fill: var(--saffron-letter);
 }
 
 #trace-line {
@@ -116,61 +223,126 @@ h1 {
   pointer-events: none;
 }
 
+/* Words found: the group on the left, its words on the right. */
 #found {
+  box-sizing: border-box;
   width: 100%;
   max-width: 30rem;
-  margin: 0.5rem 0 1.5rem;
+  margin: 0.75rem 0 1.5rem;
+  padding: 0 0.75rem;
+}
+
+#found section {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  align-items: baseline;
+  padding: 0.4rem 0;
+}
+
+#found section + section {
+  border-top: 1px solid var(--biscuit-edge);
 }
 
 #found h2 {
-  margin: 0.75rem 0 0.25rem;
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
 #found ul {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem 1rem;
+  gap: 0.2rem 1rem;
   margin: 0;
   padding: 0;
   list-style: none;
-  letter-spacing: 0.1em;
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+}
+
+#found section[data-group="bonus"] ul {
+  color: var(--muted);
+}
+
+/* Complete: the finished board is rimmed in saffron. */
+body.complete #board .dimmed polygon {
+  stroke: var(--saffron);
 }
 
 body.complete #progress {
+  color: var(--ink);
   font-weight: 700;
 }
 
-/* The heading stays centred; the Puzzles button sits at its right so
-   the board below does not move. */
-header {
-  position: relative;
-  width: 100%;
-  max-width: 30rem;
-  text-align: center;
+body.complete #message[data-outcome="found"] {
+  color: var(--gold-ink);
+}
+
+/* The celebration: one sweep of saffron glaze across the tiles, once.
+   Each tile's delay comes from its place in a repeating run of four
+   tiles, not from its row. */
+@media (prefers-reduced-motion: no-preference) {
+  body.complete #board .tile polygon {
+    animation: glaze-sweep 0.9s ease-in-out both;
+  }
+
+  body.complete #board .tile:nth-child(4n + 2) polygon {
+    animation-delay: 0.08s;
+  }
+
+  body.complete #board .tile:nth-child(4n + 3) polygon {
+    animation-delay: 0.16s;
+  }
+
+  body.complete #board .tile:nth-child(4n) polygon {
+    animation-delay: 0.24s;
+  }
+
+  body.complete #progress {
+    animation: settle 0.6s ease-out 0.3s both;
+  }
+}
+
+@keyframes glaze-sweep {
+  40% {
+    fill: var(--saffron);
+  }
+}
+
+@keyframes settle {
+  from {
+    opacity: 0;
+  }
 }
 
 #show-puzzles {
   position: absolute;
   top: 0.6rem;
   right: 0;
-  padding: 0.2rem 0.6rem;
-  border: 2px solid var(--tile-edge);
-  border-radius: 1rem;
-  background: var(--paper);
+  padding: 0.2rem 0.65rem;
+  border: 1.5px solid var(--glaze);
+  border-radius: 0.35rem;
+  background: transparent;
   color: var(--ink);
   font: inherit;
   font-size: 0.85rem;
 }
 
 #show-puzzles[aria-expanded="true"] {
-  background: var(--tile);
+  background: var(--glaze);
+  color: var(--glaze-letter);
 }
 
 #show-puzzles[hidden] {
   display: none;
+}
+
+#show-puzzles:focus-visible,
+#puzzles a:focus-visible {
+  outline: 2px solid var(--saffron);
+  outline-offset: 2px;
 }
 
 /* Laid over the board rather than pushing it down. */
@@ -183,10 +355,10 @@ header {
   width: min(100% - 1rem, 30rem);
   max-height: 70vh;
   overflow-y: auto;
-  border: 2px solid var(--tile-edge);
-  border-radius: 0.5rem;
-  background: var(--paper);
-  box-shadow: 0 0.5rem 1.5rem rgba(59, 42, 20, 0.25);
+  border: 1px solid var(--biscuit-edge);
+  border-radius: 0.35rem;
+  background: var(--panel);
+  box-shadow: 0 0.75rem 2rem var(--shadow);
 }
 
 #puzzles ul {
@@ -197,36 +369,70 @@ header {
 
 #puzzles a {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.6rem;
   align-items: baseline;
-  padding: 0.6rem 0.9rem;
+  padding: 0.7rem 0.9rem;
   color: var(--ink);
   text-decoration: none;
 }
 
 #puzzles li + li a {
-  border-top: 1px solid var(--tile);
+  border-top: 1px solid var(--biscuit-edge);
+}
+
+/* The puzzle being played is marked with a saffron tile; the others
+   keep the same indent so the dates line up. */
+#puzzles a::before {
+  content: '';
+  flex: none;
+  align-self: center;
+  width: 0.7rem;
+  height: 0.8rem;
+  visibility: hidden;
+  background: var(--saffron);
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
 }
 
 #puzzles a[aria-current="page"] {
-  background: var(--tile);
   font-weight: 700;
+}
+
+#puzzles a[aria-current="page"]::before {
+  visibility: visible;
 }
 
 #puzzles .label {
   color: var(--muted);
+  font-style: italic;
 }
 
 #puzzles .count {
   margin-left: auto;
+  color: var(--muted);
+  font-size: 0.9rem;
   font-variant-numeric: tabular-nums;
 }
 
 #notice {
   display: none;
-  margin: 2rem 1rem;
-  font-size: 1.1rem;
+  max-width: 20rem;
+  margin: 4rem 1rem 2rem;
+  font-family: var(--serif);
+  font-size: 1.25rem;
+  line-height: 1.5;
   text-align: center;
+  overflow-wrap: anywhere;
+}
+
+/* An empty, unglazed tile above the notice. */
+#notice::before {
+  content: '';
+  display: block;
+  width: 3.5rem;
+  height: 4rem;
+  margin: 0 auto 1.25rem;
+  background: var(--biscuit-edge);
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
 }
 
 body.notice #notice {
