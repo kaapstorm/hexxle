@@ -11,7 +11,13 @@
 </head>
 <body>
   <main>
-    <h1>Hexxle</h1>
+    <header>
+      <h1>Hexxle</h1>
+      <button id="show-puzzles" type="button" aria-expanded="false"
+              aria-controls="puzzles" hidden>Puzzles</button>
+    </header>
+    <nav id="puzzles" aria-label="Puzzles" hidden></nav>
+    <p id="notice" role="status"></p>
     <p id="title"></p>
     <p id="word" aria-live="polite"></p>
     <svg id="board" xmlns="http://www.w3.org/2000/svg" role="img"

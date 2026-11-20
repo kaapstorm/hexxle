@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from contextlib import contextmanager
 from typing import Iterator
 
@@ -12,6 +13,15 @@ from playwright.sync_api import (
 VIEWPORT = {'width': 390, 'height': 844}
 READY_TIMEOUT_MS = 30_000
 STEPS_PER_TILE = 5
+# Chromium's console error for any fetch answered with 404.
+MISSING_RESOURCE = (
+    'Failed to load resource: the server responded with a status of 404')
+# Chromium's console error for a request that got no response, such as
+# one aborted with ``route.abort()``.
+FAILED_RESOURCE = 'Failed to load resource: net::ERR_FAILED'
+# Chromium's console error for a fetch answered with 500.
+SERVER_ERROR = (
+    'Failed to load resource: the server responded with a status of 500')
 
 
 def tile(page: Page, pos: tuple[int, int]) -> Locator:
@@ -51,20 +61,33 @@ def wait_until_ready(page: Page) -> None:
 
 
 @contextmanager
-def open_page(url: str, init_script: str | None = None) -> Iterator[Page]:
+def open_page(
+    url: str,
+    init_script: str | None = None,
+    allow_missing: bool = False,
+    prepare: Callable[[Page], None] | None = None,
+    allow_errors: tuple[str, ...] = (),
+) -> Iterator[Page]:
     """Open ``url`` in Chromium as a phone and wait for the page to render.
 
     ``init_script``, if given, is JavaScript run in the page before any
-    of the page's own scripts, on every load.
+    of the page's own scripts, on every load. ``prepare``, if given, is
+    called with the page before it is loaded, for example to add routes.
 
     Fails if the page logs any console error or raises an uncaught
-    exception, whether before or after it becomes ready.
+    exception, whether before or after it becomes ready. Console errors
+    that start with one of ``allow_errors`` are not counted;
+    ``allow_missing`` adds the browser's own error for a 404 response.
     """
     errors = []
+    allowed = allow_errors + ((MISSING_RESOURCE,) if allow_missing else ())
 
     def on_console(message: ConsoleMessage) -> None:
-        if message.type == 'error':
-            errors.append(message.text)
+        if message.type != 'error':
+            return
+        if any(message.text.startswith(prefix) for prefix in allowed):
+            return
+        errors.append(message.text)
 
     def on_page_error(error: Error) -> None:
         errors.append(str(error))
@@ -78,6 +101,8 @@ def open_page(url: str, init_script: str | None = None) -> Iterator[Page]:
             page.on('pageerror', on_page_error)
             if init_script is not None:
                 page.add_init_script(init_script)
+            if prepare is not None:
+                prepare(page)
             page.goto(url)
             try:
                 wait_until_ready(page)

@@ -61,3 +61,31 @@ def make_index(names):
 def dump_index(index):
     """The text of ``index.json`` for the identifiers in ``index``."""
     return json.dumps(index) + '\n'
+
+
+def parse_index(text):
+    """The valid identifiers in the index ``text``, in its order.
+
+    Entries that are not identifiers are dropped. Raises ``ValueError``
+    if ``text`` is not a JSON list.
+    """
+    try:
+        index = json.loads(text)
+    except ValueError:
+        raise ValueError('the index is not valid JSON')
+    if not isinstance(index, list):
+        raise ValueError('the index is not a list')
+    return [ident for ident in index if is_identifier(ident)]
+
+
+def choose(index, requested):
+    """The identifier to play from a non-empty ``index``.
+
+    ``requested`` is the identifier asked for, or ``None`` for the
+    newest. Returns ``None`` if ``requested`` is not in the index.
+    """
+    if requested is None:
+        return index[0]
+    if is_identifier(requested) and requested in index:
+        return requested
+    return None

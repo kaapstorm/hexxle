@@ -23,6 +23,7 @@ body {
 }
 
 main {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -140,4 +141,103 @@ h1 {
 
 body.complete #progress {
   font-weight: 700;
+}
+
+/* The heading stays centred; the Puzzles button sits at its right so
+   the board below does not move. */
+header {
+  position: relative;
+  width: 100%;
+  max-width: 30rem;
+  text-align: center;
+}
+
+#show-puzzles {
+  position: absolute;
+  top: 0.6rem;
+  right: 0;
+  padding: 0.2rem 0.6rem;
+  border: 2px solid var(--tile-edge);
+  border-radius: 1rem;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+#show-puzzles[aria-expanded="true"] {
+  background: var(--tile);
+}
+
+#show-puzzles[hidden] {
+  display: none;
+}
+
+/* Laid over the board rather than pushing it down. */
+#puzzles {
+  position: absolute;
+  top: 2.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+  width: min(100% - 1rem, 30rem);
+  max-height: 70vh;
+  overflow-y: auto;
+  border: 2px solid var(--tile-edge);
+  border-radius: 0.5rem;
+  background: var(--paper);
+  box-shadow: 0 0.5rem 1.5rem rgba(59, 42, 20, 0.25);
+}
+
+#puzzles ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#puzzles a {
+  display: flex;
+  gap: 0.75rem;
+  align-items: baseline;
+  padding: 0.6rem 0.9rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+#puzzles li + li a {
+  border-top: 1px solid var(--tile);
+}
+
+#puzzles a[aria-current="page"] {
+  background: var(--tile);
+  font-weight: 700;
+}
+
+#puzzles .label {
+  color: var(--muted);
+}
+
+#puzzles .count {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+#notice {
+  display: none;
+  margin: 2rem 1rem;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+body.notice #notice {
+  display: block;
+}
+
+body.notice #board,
+body.notice #title,
+body.notice #word,
+body.notice #message,
+body.notice #progress,
+body.notice #found {
+  display: none;
 }
