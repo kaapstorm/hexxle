@@ -1,6 +1,6 @@
 from hexxle.core.board import PuzzleError, is_letter, parse_board
+from hexxle.core.paths import MIN_WORD_LENGTH, find_paths
 
-MIN_WORD_LENGTH = 4
 MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 DIGITS = '0123456789'
@@ -73,6 +73,9 @@ def puzzle_errors(puzzle):
                 errors.append(
                     '%s word %s is shorter than %d letters'
                     % (name, word, MIN_WORD_LENGTH))
+            elif not find_paths(puzzle.board, word):
+                errors.append(
+                    '%s word %s is not on the board' % (name, word))
         for word in _duplicates(words):
             errors.append('%s word %s is listed twice' % (name, word))
     for word in _duplicates(puzzle.required + puzzle.bonus):

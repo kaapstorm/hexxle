@@ -61,6 +61,7 @@ def rejects_malformed_files(text, line):
     ('---\nTAX\nTAXI\n', 'TAX'),
     ('---\nTAXI\nTAXI\n', 'TAXI'),
     ('---\nTAXI\n--- bonus\nTAXI\n', 'TAXI'),
+    ('---\nTAXI\nTAXIS\n', 'TAXIS'),
 ])
 def reports_list_problems(sections, expected_text):
     board = '\n'.join(EXAMPLE.split('\n')[:4]) + '\n\n'
