@@ -5,10 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Hexxle</title>
   <link rel="stylesheet" href="./pyscript/core.css">
+  <link rel="stylesheet" href="./style.css">
   <script type="module" src="./pyscript/core.js"></script>
 </head>
 <body>
-  <p id="message"></p>
+  <main>
+    <h1>Hexxle</h1>
+    <p id="word" aria-live="polite"></p>
+    <svg id="board" xmlns="http://www.w3.org/2000/svg" role="img"
+         aria-label="Letter board"></svg>
+    <p id="message" aria-live="polite"></p>
+  </main>
   <script type="mpy" src="./main.py" config="./pyscript.json"></script>
 </body>
 </html>

@@ -1,0 +1,89 @@
+:root {
+  --ink: #3b2a14;
+  --paper: #fdf8ee;
+  --tile: #f6d27a;
+  --tile-edge: #c9962e;
+  --tile-in-path: #e0892b;
+  --trace: rgba(120, 50, 10, 0.45);
+  --cancel: #b3261e;
+  /* Vertical space taken by everything on the page except the board. */
+  --chrome-height: 12rem;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: system-ui, sans-serif;
+  overscroll-behavior: none;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 0.5rem;
+}
+
+h1 {
+  margin: 0.75rem 0 0;
+  font-size: 1.25rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+#word,
+#message {
+  min-height: 2rem;
+  margin: 0.5rem 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  line-height: 2rem;
+}
+
+#word.cancelling {
+  color: var(--cancel);
+  text-decoration: line-through;
+}
+
+/* Fill the width, but never so tall that the board leaves the screen.
+   --aspect (width / height) is set on the element when it is drawn. */
+#board {
+  display: block;
+  width: min(100%, calc((100vh - var(--chrome-height)) * var(--aspect, 1)));
+  width: min(100%, calc((100dvh - var(--chrome-height)) * var(--aspect, 1)));
+  height: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#board polygon {
+  fill: var(--tile);
+  stroke: var(--tile-edge);
+  stroke-width: 2;
+}
+
+#board .in-path polygon {
+  fill: var(--tile-in-path);
+}
+
+#board text {
+  fill: var(--ink);
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
+#trace-line {
+  fill: none;
+  stroke: var(--trace);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}

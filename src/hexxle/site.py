@@ -18,6 +18,7 @@ PyScript behaviour this module relies on, confirmed by experiment with
 import functools
 import json
 import shutil
+import socket
 import tempfile
 import threading
 from contextlib import contextmanager
@@ -25,6 +26,13 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Iterator
 
+from hexxle.core.index import (
+    INDEX_NAME,
+    PUZZLE_SUFFIX,
+    PUZZLES_DIR,
+    dump_index,
+    make_index,
+)
 from hexxle.errors import HexxleError
 from hexxle.repo import REPO
 
@@ -38,6 +46,11 @@ MICROPYTHON = (
     NODE_MODULES / '@micropython' / 'micropython-webassembly-pyscript'
 )
 MICROPYTHON_FILES = ('micropython.mjs', 'micropython.wasm')
+
+ALL_INTERFACES = '0.0.0.0'
+# An address off the local network (TEST-NET-1), so the system picks the
+# default route to reach it. Nothing is ever sent to it.
+ROUTE_PROBE = ('192.0.2.1', 80)
 
 
 def build_site(dest: Path, with_tests: bool = False) -> None:
@@ -116,6 +129,22 @@ def _write_config(path: Path, files: list[str]) -> None:
     path.write_text(json.dumps(config, indent=2) + '\n')
 
 
+def add_puzzles(site: Path, puzzles_dir: Path) -> None:
+    """Copy the puzzle files into ``site/puzzles`` and write its index.
+
+    Raises ``HexxleError`` if ``puzzles_dir`` is not a directory.
+    """
+    if not puzzles_dir.is_dir():
+        raise HexxleError('puzzles directory %s does not exist' % puzzles_dir)
+    puzzles = site / PUZZLES_DIR
+    puzzles.mkdir(exist_ok=True)
+    names = []
+    for path in sorted(puzzles_dir.glob('*' + PUZZLE_SUFFIX)):
+        shutil.copy2(path, puzzles / path.name)
+        names.append(path.name)
+    (puzzles / INDEX_NAME).write_text(dump_index(make_index(names)))
+
+
 @contextmanager
 def site_server(
     puzzles_dir: Path | None = None,
@@ -132,13 +161,9 @@ def site_server(
         site = root / prefix
         build_site(site, with_tests=with_tests)
         if puzzles_dir is not None:
-            puzzles = site / 'puzzles'
-            puzzles.mkdir()
-            for path in sorted(puzzles_dir.glob('*.txt')):
-                shutil.copy2(path, puzzles / path.name)
+            add_puzzles(site, puzzles_dir)
 
-        handler = functools.partial(_QuietHandler, directory=str(root))
-        server = ThreadingHTTPServer(('127.0.0.1', 0), handler)
+        server = _make_server(root, '127.0.0.1', 0)
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
         try:
@@ -148,6 +173,54 @@ def site_server(
             server.shutdown()
             server.server_close()
             thread.join()
+
+
+def serve(puzzles_dir: Path, host: str, port: int) -> None:
+    """Build the site with the puzzles and serve it until interrupted.
+
+    Raises ``HexxleError`` if the site cannot be built or the address
+    cannot be listened on.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        site = Path(tmp)
+        build_site(site)
+        add_puzzles(site, puzzles_dir)
+        try:
+            server = _make_server(site, host, port)
+        except OSError as error:
+            raise HexxleError(
+                'cannot listen on %s port %d: %s' % (host, port, error)
+            ) from None
+        with server:
+            bound_port = server.server_address[1]
+            print(f'Serving Hexxle at http://{host}:{bound_port}/')
+            if host == ALL_INTERFACES:
+                lan = _lan_address()
+                print(f'On the local network: http://{lan}:{bound_port}/')
+            print('Press Ctrl-C to stop.')
+            try:
+                server.serve_forever()
+            except KeyboardInterrupt:
+                pass
+
+
+def _lan_address() -> str:
+    """This machine's address on the local network, or its hostname.
+
+    Connecting a UDP socket sends nothing; it only makes the system
+    choose the interface it would route through.
+    """
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as probe:
+            probe.connect(ROUTE_PROBE)
+            return probe.getsockname()[0]
+    except OSError:
+        return socket.gethostname()
+
+
+def _make_server(root: Path, host: str, port: int) -> ThreadingHTTPServer:
+    handler = functools.partial(_QuietHandler, directory=str(root))
+    return ThreadingHTTPServer((host, port), handler)
 
 
 class _QuietHandler(SimpleHTTPRequestHandler):

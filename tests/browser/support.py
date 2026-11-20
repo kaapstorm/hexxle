@@ -4,12 +4,44 @@ from typing import Iterator
 from playwright.sync_api import (
     ConsoleMessage,
     Error,
+    Locator,
     Page,
     sync_playwright,
 )
 
 VIEWPORT = {'width': 390, 'height': 844}
 READY_TIMEOUT_MS = 30_000
+STEPS_PER_TILE = 5
+
+
+def tile(page: Page, pos: tuple[int, int]) -> Locator:
+    """The ``g.tile`` element at board position ``pos``."""
+    column, row = pos
+    return page.locator(f'g.tile[data-pos="{column},{row}"]')
+
+
+def centre(locator: Locator) -> tuple[float, float]:
+    """The centre of ``locator``'s bounding box, in page pixels."""
+    box = locator.bounding_box()
+    return box['x'] + box['width'] / 2, box['y'] + box['height'] / 2
+
+
+def trace(
+    page: Page,
+    positions: list[tuple[int, int]],
+    release: bool = True,
+) -> None:
+    """Drag the mouse through the tiles at ``positions``.
+
+    Presses at the first tile's centre and moves to each following
+    tile's centre in several steps. Releases at the end if ``release``.
+    """
+    page.mouse.move(*centre(tile(page, positions[0])))
+    page.mouse.down()
+    for pos in positions[1:]:
+        page.mouse.move(*centre(tile(page, pos)), steps=STEPS_PER_TILE)
+    if release:
+        page.mouse.up()
 
 
 @contextmanager
