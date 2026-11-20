@@ -14,13 +14,22 @@ class Puzzle:
         self.bonus = bonus
 
 
-def parse_puzzle(text):
+def _split_board(text):
     lines = text.split('\n')
-    board_end = len(lines)
     for index, line in enumerate(lines):
         if line.startswith('---'):
-            board_end = index
-            break
+            return lines, index
+    return lines, len(lines)
+
+
+def parse_board_only(text):
+    """Parse just the board, ignoring any word sections."""
+    lines, board_end = _split_board(text)
+    return parse_board(lines[:board_end], first_line=1)
+
+
+def parse_puzzle(text):
+    lines, board_end = _split_board(text)
     board = parse_board(lines[:board_end], first_line=1)
 
     required = []
