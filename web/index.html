@@ -6,15 +6,19 @@
   <title>Hexxle</title>
   <link rel="stylesheet" href="./pyscript/core.css">
   <link rel="stylesheet" href="./style.css">
+  <script src="./storage.js"></script>
   <script type="module" src="./pyscript/core.js"></script>
 </head>
 <body>
   <main>
     <h1>Hexxle</h1>
+    <p id="title"></p>
     <p id="word" aria-live="polite"></p>
     <svg id="board" xmlns="http://www.w3.org/2000/svg" role="img"
          aria-label="Letter board"></svg>
     <p id="message" aria-live="polite"></p>
+    <p id="progress"></p>
+    <div id="found"></div>
   </main>
   <script type="mpy" src="./main.py" config="./pyscript.json"></script>
 </body>

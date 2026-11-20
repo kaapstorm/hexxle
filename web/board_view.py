@@ -1,7 +1,8 @@
 """Draw the board in ``svg#board`` and let a finger trace words on it.
 
 All rules live in ``hexxle.core``; this module only turns pointer events
-into ``Trace`` calls and reflects the trace in the page. A pointer move
+into ``Trace`` calls, reflects the trace in the page and shows the hint
+numbers and dimming a ``Game`` reports for each tile. A pointer move
 is the hot path, so it touches the DOM only when the trace changes.
 """
 
@@ -16,6 +17,12 @@ TILE_SIZE = 50
 # The drawn hexagon is a little smaller than its cell, leaving a gap.
 DRAWN_RATIO = 0.93
 LETTER_RATIO = 0.8
+# Hint numbers: small, in the tile's upper-left (unfound required words
+# that can start here, each counted once) and lower-right (unfound
+# required words that can use this tile), clear of the letter.
+HINT_RATIO = 0.26
+HINT_OFFSET_X = 0.5
+HINT_OFFSET_Y = 0.45
 TRACE_WIDTH_RATIO = 0.3
 # Room around the board so tile edges are not clipped.
 MARGIN = 3
@@ -40,10 +47,15 @@ class BoardView:
         self._line = self._svg.querySelector('#trace-line')
         self._tiles = {}
         self._points = {}
+        self._hints = {}
         for pos in board.positions():
-            self._tiles[pos] = self._svg.querySelector(
+            group = self._svg.querySelector(
                 'g.tile[data-pos="%s"]' % _pos_key(pos))
+            self._tiles[pos] = group
             self._points[pos] = _point(*tile_centre(pos, TILE_SIZE))
+            self._hints[pos] = (
+                group.querySelector('text.hint-starts'),
+                group.querySelector('text.hint-uses'))
         self._shown = []
         self._pointer = None
         self._to_svg = None
@@ -72,6 +84,8 @@ class BoardView:
 
         parts = []
         drawn = TILE_SIZE * DRAWN_RATIO
+        hint_x = TILE_SIZE * HINT_OFFSET_X
+        hint_y = TILE_SIZE * HINT_OFFSET_Y
         for pos in self._board.positions():
             cx, cy = tile_centre(pos, TILE_SIZE)
             corners = ' '.join(
@@ -79,14 +93,30 @@ class BoardView:
             parts.append(
                 '<g class="tile" data-pos="%s">'
                 '<polygon points="%s"></polygon>'
-                '<text x="%.1f" y="%.1f" font-size="%.1f">%s</text>'
+                '<text class="letter" x="%.1f" y="%.1f" font-size="%.1f">'
+                '%s</text>'
+                '<text class="hint-starts" x="%.1f" y="%.1f" '
+                'font-size="%.1f"></text>'
+                '<text class="hint-uses" x="%.1f" y="%.1f" '
+                'font-size="%.1f"></text>'
                 '</g>' % (
                     _pos_key(pos), corners, cx, cy,
-                    TILE_SIZE * LETTER_RATIO, self._board.letter(pos)))
+                    TILE_SIZE * LETTER_RATIO, self._board.letter(pos),
+                    cx - hint_x, cy - hint_y, TILE_SIZE * HINT_RATIO,
+                    cx + hint_x, cy + hint_y, TILE_SIZE * HINT_RATIO))
         parts.append(
             '<polyline id="trace-line" points="" stroke-width="%.1f">'
             '</polyline>' % (TILE_SIZE * TRACE_WIDTH_RATIO))
         self._svg.innerHTML = ''.join(parts)
+
+    def show_hints(self, game):
+        """Show each tile's hint numbers and dim tiles no word needs."""
+        for pos, (starts_text, uses_text) in self._hints.items():
+            starts, uses = game.hints(pos)
+            starts_text.textContent = str(starts) if starts else ''
+            uses_text.textContent = str(uses) if uses else ''
+            self._tiles[pos].classList.toggle(
+                'dimmed', game.is_dimmed(pos))
 
     def _on_down(self, event):
         if self._pointer is not None:

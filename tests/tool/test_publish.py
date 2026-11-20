@@ -102,7 +102,8 @@ def says_so_when_the_index_upload_fails_after_the_puzzle_went_up():
 def deploys_the_site_and_never_touches_puzzles():
     fake = FakeSftp()
     deploy('host:/srv/x', run_batch=fake)
-    for path in ('/srv/x/index.html', '/srv/x/hexxle/core/board.py',
+    for path in ('/srv/x/index.html', '/srv/x/storage.js',
+                 '/srv/x/hexxle/core/board.py',
                  '/srv/x/pyscript/core.js',
                  '/srv/x/micropython/micropython.wasm'):
         assert path in fake.uploaded, path

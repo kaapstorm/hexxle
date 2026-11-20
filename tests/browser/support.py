@@ -44,9 +44,18 @@ def trace(
         page.mouse.up()
 
 
+def wait_until_ready(page: Page) -> None:
+    """Wait until the page's Python has drawn the board and is playable."""
+    page.wait_for_selector(
+        'html[data-ready]', state='attached', timeout=READY_TIMEOUT_MS)
+
+
 @contextmanager
-def open_page(url: str) -> Iterator[Page]:
+def open_page(url: str, init_script: str | None = None) -> Iterator[Page]:
     """Open ``url`` in Chromium as a phone and wait for the page to render.
+
+    ``init_script``, if given, is JavaScript run in the page before any
+    of the page's own scripts, on every load.
 
     Fails if the page logs any console error or raises an uncaught
     exception, whether before or after it becomes ready.
@@ -67,13 +76,11 @@ def open_page(url: str) -> Iterator[Page]:
             page = context.new_page()
             page.on('console', on_console)
             page.on('pageerror', on_page_error)
+            if init_script is not None:
+                page.add_init_script(init_script)
             page.goto(url)
             try:
-                page.wait_for_selector(
-                    'html[data-ready]',
-                    state='attached',
-                    timeout=READY_TIMEOUT_MS,
-                )
+                wait_until_ready(page)
             except Exception:
                 raise AssertionError(
                     f'page never became ready; console errors: {errors}'

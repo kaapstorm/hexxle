@@ -44,7 +44,7 @@ def dispatch(page: Page, selector: str, kind: str, pointer_id: int) -> None:
 def draws_one_tile_per_letter():
     with site_server(puzzles_dir=PUZZLES) as base, open_page(base) as page:
         count = page.locator('g.tile').count()
-        letter = tile(page, X).locator('text').text_content()
+        letter = tile(page, X).locator('text.letter').text_content()
     assert count == TILE_COUNT
     assert letter == 'X'
 
@@ -68,7 +68,7 @@ def releasing_submits_the_word():
         message = page.locator('#message').text_content()
         word = page.locator('#word').text_content()
         marked = page.locator('g.tile.in-path').count()
-    assert message == 'EXACT'
+    assert message == 'Found!'
     assert word == ''
     assert marked == 0
 
@@ -108,7 +108,7 @@ def dragging_back_onto_the_board_disarms():
         page.mouse.up()
         message = page.locator('#message').text_content()
     assert 'cancelling' not in classes.split()
-    assert message == 'TAX'
+    assert message == 'Too short'
 
 
 @test
@@ -120,7 +120,7 @@ def releasing_beside_the_board_still_submits():
         page.mouse.move(box['x'] + box['width'] + BESIDE_PX, y, steps=5)
         page.mouse.up()
         message = page.locator('#message').text_content()
-    assert message == 'XL'
+    assert message == 'Too short'
 
 
 @test
@@ -145,7 +145,7 @@ def a_second_pointer_is_ignored():
         page.mouse.move(*centre(tile(page, X)), steps=5)
         page.mouse.up()
         message = page.locator('#message').text_content()
-    assert message == 'TAX'
+    assert message == 'Too short'
 
 
 @test

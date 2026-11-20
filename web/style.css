@@ -6,8 +6,11 @@
   --tile-in-path: #e0892b;
   --trace: rgba(120, 50, 10, 0.45);
   --cancel: #b3261e;
-  /* Vertical space taken by everything on the page except the board. */
-  --chrome-height: 12rem;
+  --muted: #8a7a62;
+  /* Vertical space taken by everything above and just below the board
+     (heading, title, word, message, progress); the found words may
+     scroll below. */
+  --chrome-height: 14rem;
 }
 
 html,
@@ -31,6 +34,13 @@ h1 {
   font-size: 1.25rem;
   letter-spacing: 0.3em;
   text-transform: uppercase;
+}
+
+#title,
+#progress {
+  margin: 0.25rem 0 0;
+  font-size: 0.95rem;
+  line-height: 1.25rem;
 }
 
 #word,
@@ -72,6 +82,18 @@ h1 {
   fill: var(--tile-in-path);
 }
 
+#board .dimmed polygon {
+  fill: var(--paper);
+}
+
+#board .dimmed .letter {
+  fill: var(--muted);
+}
+
+#board .dimmed.in-path polygon {
+  fill: var(--tile-in-path);
+}
+
 #board text {
   fill: var(--ink);
   font-weight: 700;
@@ -80,10 +102,42 @@ h1 {
   pointer-events: none;
 }
 
+#board .hint-starts,
+#board .hint-uses {
+  font-weight: 600;
+}
+
 #trace-line {
   fill: none;
   stroke: var(--trace);
   stroke-linecap: round;
   stroke-linejoin: round;
   pointer-events: none;
+}
+
+#found {
+  width: 100%;
+  max-width: 30rem;
+  margin: 0.5rem 0 1.5rem;
+}
+
+#found h2 {
+  margin: 0.75rem 0 0.25rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+#found ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  letter-spacing: 0.1em;
+}
+
+body.complete #progress {
+  font-weight: 700;
 }
