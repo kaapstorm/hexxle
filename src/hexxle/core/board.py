@@ -3,7 +3,8 @@ NEIGHBOUR_OFFSETS = [(-2, 0), (2, 0), (-1, -1), (1, -1), (-1, 1), (1, 1)]
 
 class PuzzleError(Exception):
     def __init__(self, message, line=None, column=None):
-        Exception.__init__(self, message)
+        # MicroPython's Exception has no __init__ to call directly.
+        super().__init__(message)
         self.message = message
         self.line = line
         self.column = column

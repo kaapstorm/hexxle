@@ -29,6 +29,8 @@ from hexxle.errors import HexxleError
 from hexxle.repo import REPO
 
 WEB = REPO / 'web'
+WEB_TESTS = REPO / 'web_tests'
+CORE_TESTS = REPO / 'tests' / 'core'
 SRC = REPO / 'src'
 NODE_MODULES = REPO / 'node_modules'
 PYSCRIPT_DIST = NODE_MODULES / '@pyscript' / 'core' / 'dist'
@@ -39,38 +41,27 @@ MICROPYTHON_FILES = ('micropython.mjs', 'micropython.wasm')
 
 
 def build_site(dest: Path, with_tests: bool = False) -> None:
-    """Assemble the static site in ``dest``."""
-    if with_tests:
-        raise NotImplementedError('with_tests arrives with the core tests')
+    """Assemble the static site in ``dest``.
+
+    With ``with_tests``, also add ``tests.html``, which runs the core
+    tests under MicroPython with a stand-in for Testsweet.
+    """
     _require_npm_files()
     dest.mkdir(parents=True, exist_ok=True)
-    python_files = []
-
-    for path in sorted(WEB.iterdir()):
-        if path.is_file():
-            shutil.copy2(path, dest / path.name)
-            if path.suffix == '.py':
-                python_files.append(path.name)
-
+    page_files = _copy_files(sorted(WEB.iterdir()), WEB, dest)
     package_files = [SRC / 'hexxle' / '__init__.py']
     package_files += sorted((SRC / 'hexxle' / 'core').glob('*.py'))
-    for path in package_files:
-        relative = path.relative_to(SRC).as_posix()
-        target = dest / relative
-        target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(path, target)
-        python_files.append(relative)
+    package_files = _copy_files(package_files, SRC, dest)
 
     shutil.copytree(PYSCRIPT_DIST, dest / 'pyscript', dirs_exist_ok=True)
     (dest / 'micropython').mkdir(exist_ok=True)
     for name in MICROPYTHON_FILES:
         shutil.copy2(MICROPYTHON / name, dest / 'micropython' / name)
 
-    config = {
-        'interpreter': './micropython/micropython.mjs',
-        'files': {'./' + name: './' + name for name in sorted(python_files)},
-    }
-    (dest / 'pyscript.json').write_text(json.dumps(config, indent=2) + '\n')
+    python_files = [name for name in page_files if name.endswith('.py')]
+    _write_config(dest / 'pyscript.json', python_files + package_files)
+    if with_tests:
+        _add_tests(dest, package_files)
 
 
 def _require_npm_files() -> None:
@@ -81,6 +72,48 @@ def _require_npm_files() -> None:
         if not path.exists():
             raise HexxleError(
                 '%s is missing; run "npm ci" in %s first' % (path, REPO))
+
+
+def _add_tests(dest: Path, package_files: list[str]) -> None:
+    runner_files = _copy_files(sorted(WEB_TESTS.iterdir()), WEB_TESTS, dest)
+    test_files = [REPO / 'tests' / '__init__.py']
+    test_files += sorted(CORE_TESTS.glob('*.py'))
+    test_files = _copy_files(test_files, REPO, dest)
+
+    modules = [path.stem for path in sorted(CORE_TESTS.glob('test_*.py'))]
+    manifest = 'tests/core/manifest.json'
+    (dest / manifest).write_text(json.dumps(modules) + '\n')
+
+    python_files = [name for name in runner_files if name.endswith('.py')]
+    _write_config(
+        dest / 'pyscript-tests.json',
+        python_files + package_files + test_files + [manifest],
+    )
+
+
+def _copy_files(paths: list[Path], base: Path, dest: Path) -> list[str]:
+    """Copy the files among ``paths`` to the same place under ``dest``.
+
+    Returns their paths relative to ``base``.
+    """
+    copied = []
+    for path in paths:
+        if not path.is_file():
+            continue
+        relative = path.relative_to(base).as_posix()
+        target = dest / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(path, target)
+        copied.append(relative)
+    return copied
+
+
+def _write_config(path: Path, files: list[str]) -> None:
+    config = {
+        'interpreter': './micropython/micropython.mjs',
+        'files': {'./' + name: './' + name for name in sorted(files)},
+    }
+    path.write_text(json.dumps(config, indent=2) + '\n')
 
 
 @contextmanager

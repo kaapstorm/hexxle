@@ -27,7 +27,7 @@ dev = [
 line-length = 79
 
 [tool.ruff.lint]
-select = ["E", "F", "ANN"]
+select = ["E", "F", "ANN", "TID251"]
 ignore = [
     "ANN002",  # missing annotation for *args
     "ANN003",  # missing annotation for **kwargs
@@ -35,6 +35,27 @@ ignore = [
 
 [tool.ruff.lint.flake8-annotations]
 ignore-fully-untyped = true
+
+[tool.ruff.lint.per-file-ignores]
+# The import ban applies only to code that must run under MicroPython.
+"!{src/hexxle/core,tests/core}/**" = ["TID251"]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"dataclasses".msg = "not available in MicroPython; hexxle.core must run there"
+"enum".msg = "not available in MicroPython; hexxle.core must run there"
+"pathlib".msg = "not available in MicroPython; hexxle.core must run there"
+"typing".msg = "not available in MicroPython; hexxle.core must run there"
+"functools".msg = "not available in MicroPython; hexxle.core must run there"
+"itertools".msg = "not available in MicroPython; hexxle.core must run there"
+"contextlib".msg = "not available in MicroPython; hexxle.core must run there"
+"datetime".msg = "not available in MicroPython; hexxle.core must run there"
+"abc".msg = "not available in MicroPython; hexxle.core must run there"
+"re".msg = "not available in MicroPython; hexxle.core must run there"
+"collections".msg = "not available in MicroPython; hexxle.core must run there"
+"os".msg = "not available in MicroPython; hexxle.core must run there"
+"subprocess".msg = "not available in MicroPython; hexxle.core must run there"
+"string".msg = "not available in MicroPython; hexxle.core must run there"
+"copy".msg = "not available in MicroPython; hexxle.core must run there"
 
 [tool.ruff.format]
 quote-style = "single"
