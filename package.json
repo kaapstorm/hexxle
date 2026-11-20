@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@micropython/micropython-webassembly-pyscript": "1.28.0-6",
+    "@pyscript/core": "0.7.31"
+  }
+}
