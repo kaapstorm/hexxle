@@ -47,6 +47,12 @@ MICROPYTHON = (
 )
 MICROPYTHON_FILES = ('micropython.mjs', 'micropython.wasm')
 
+# Python files are published as ``.txt``: some web servers (Apache with a
+# CGI handler for ``.py``) try to run a ``.py`` file instead of sending
+# it. PyScript's ``files`` mapping gives them their real names back.
+PYTHON_SUFFIX = '.py'
+PUBLISHED_PYTHON_SUFFIX = '.txt'
+
 ALL_INTERFACES = '0.0.0.0'
 # An address off the local network (TEST-NET-1), so the system picks the
 # default route to reach it. Nothing is ever sent to it.
@@ -107,24 +113,35 @@ def _add_tests(dest: Path, package_files: list[str]) -> None:
 def _copy_files(paths: list[Path], base: Path, dest: Path) -> list[str]:
     """Copy the files among ``paths`` to the same place under ``dest``.
 
-    Returns their paths relative to ``base``.
+    A Python file is copied under its published name. Returns the
+    files' own paths relative to ``base``.
     """
     copied = []
     for path in paths:
         if not path.is_file():
             continue
         relative = path.relative_to(base).as_posix()
-        target = dest / relative
+        target = dest / published_name(relative)
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(path, target)
         copied.append(relative)
     return copied
 
 
+def published_name(name: str) -> str:
+    """The name the site file ``name`` is published under."""
+    if name.endswith(PYTHON_SUFFIX):
+        return name[:-len(PYTHON_SUFFIX)] + PUBLISHED_PYTHON_SUFFIX
+    return name
+
+
 def _write_config(path: Path, files: list[str]) -> None:
     config = {
         'interpreter': './micropython/micropython.mjs',
-        'files': {'./' + name: './' + name for name in sorted(files)},
+        'files': {
+            './' + published_name(name): './' + name
+            for name in sorted(files)
+        },
     }
     path.write_text(json.dumps(config, indent=2) + '\n')
 

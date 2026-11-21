@@ -103,7 +103,7 @@ def deploys_the_site_and_never_touches_puzzles():
     fake = FakeSftp()
     deploy('host:/srv/x', run_batch=fake)
     for path in ('/srv/x/index.html', '/srv/x/storage.js',
-                 '/srv/x/hexxle/core/board.py',
+                 '/srv/x/main.txt', '/srv/x/hexxle/core/board.txt',
                  '/srv/x/pyscript/core.js',
                  '/srv/x/micropython/micropython.wasm'):
         assert path in fake.uploaded, path
@@ -113,8 +113,10 @@ def deploys_the_site_and_never_touches_puzzles():
     for path in fake.uploaded:
         relative = path[len('/srv/x/'):]
         assert not relative.startswith('tests'), path
-        for name in ('tests.html', 'run_tests.py', 'testsweet.py'):
+        for name in ('tests.html', 'run_tests.txt', 'testsweet.txt'):
             assert relative.split('/')[-1] != name, path
+        # Apache would try to run a .py file instead of sending it
+        assert not relative.endswith('.py'), path
     # parents are created before their children
     made = [shlex.split(c)[1] for c in commands if c.startswith('-mkdir ')]
     assert made[0] == '/srv/x'

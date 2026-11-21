@@ -167,6 +167,10 @@ uv run hexxle deploy
 This builds the site (page, stylesheet, Python sources and the PyScript
 runtime) and uploads it to `remote`. It never touches `puzzles/`, so
 published puzzles stay where they are. Then publish at least one puzzle.
+The Python sources are uploaded with `.txt` names (`main.txt`,
+`hexxle/core/board.txt`), because some web servers try to run a `.py`
+file instead of sending it; PyScript gives them their real names back in
+the browser.
 Every URL in the site is relative, so it can live in a subdirectory of a
 website.
 
