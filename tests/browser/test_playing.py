@@ -9,6 +9,8 @@ from tests.core.examples import PATHS
 from tests.fixture_paths import PUZZLES
 
 STORAGE_KEY = 'hexxle:2026-11-20'
+# How long a message shows before it fades: MESSAGE_MS in game_view.py.
+MESSAGE_MS = 1800
 
 BREAK_STORAGE = """
 Storage.prototype.getItem = function () { throw new Error('no storage'); };
@@ -82,11 +84,11 @@ def reports_a_repeat():
 
 
 @test
-def the_message_fades_after_two_seconds_and_is_cleared():
+def the_message_fades_and_is_cleared():
     with site_server(puzzles_dir=PUZZLES) as base, open_page(base) as page:
         page.clock.install()
         play(page, 'EXACT')
-        page.clock.run_for(1900)
+        page.clock.run_for(MESSAGE_MS - 100)
         shown = shown_message(page), is_fading(page)
         page.clock.run_for(200)
         fading = shown_message(page), is_fading(page)
@@ -98,13 +100,13 @@ def the_message_fades_after_two_seconds_and_is_cleared():
 
 
 @test
-def a_new_message_gets_its_full_two_seconds():
+def a_new_message_gets_its_full_time():
     with site_server(puzzles_dir=PUZZLES) as base, open_page(base) as page:
         page.clock.install()
         play(page, 'EXACT')
         page.clock.run_for(1500)
         play(page, 'LUXE')
-        page.clock.run_for(1900)
+        page.clock.run_for(MESSAGE_MS - 100)
         shown = shown_message(page), is_fading(page)
         page.clock.run_for(200)
         fading = is_fading(page)
@@ -120,7 +122,7 @@ def a_message_shown_during_a_fade_is_not_faded():
     with site_server(puzzles_dir=PUZZLES) as base, open_page(base) as page:
         page.clock.install()
         play(page, 'EXACT')
-        page.clock.run_for(2100)
+        page.clock.run_for(MESSAGE_MS + 100)
         was_fading = is_fading(page)
         play(page, 'LUXE')
         page.clock.run_for(1000)
