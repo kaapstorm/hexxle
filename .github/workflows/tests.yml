@@ -17,12 +17,12 @@ jobs:
         # Every Python release that is still supported.
         python-version: ['3.11', '3.12', '3.13', '3.14', '3.15']
     steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d  # v10.4.0
         with:
           enable-cache: true
           python-version: ${{ matrix.python-version }}
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
         with:
           node-version: lts/*
           cache: npm
