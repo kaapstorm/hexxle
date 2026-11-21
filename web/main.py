@@ -29,6 +29,7 @@ from hexxle.core.index import (
 )
 from hexxle.core.puzzle import parse_puzzle
 from puzzle_list import PuzzleList
+from share import ShareButton
 
 PUZZLES = './' + PUZZLES_DIR + '/'
 NO_PUZZLES = 'No puzzles yet'
@@ -157,6 +158,8 @@ try:
         board_view = BoardView(puzzle.board, on_submit)
         board_view.show_hints(game)
         game_view = GameView(game, ident)
+        # Kept so that its click handler lives as long as the page.
+        share_button = ShareButton(ident, game, game_view.show_message)
 except LoadError as error:
     window.console.warn('Hexxle could not load: %s' % error)
     show_notice(COULD_NOT_LOAD)

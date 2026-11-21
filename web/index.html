@@ -23,7 +23,10 @@
     <svg id="board" xmlns="http://www.w3.org/2000/svg" role="img"
          aria-label="Letter board"></svg>
     <p id="message" aria-live="polite"></p>
-    <p id="progress"></p>
+    <div id="status">
+      <p id="progress"></p>
+      <button id="share" type="button" hidden>Share</button>
+    </div>
     <div id="found"></div>
   </main>
   <script type="mpy" src="./main.txt" config="./pyscript.json"></script>

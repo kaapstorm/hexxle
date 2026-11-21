@@ -35,7 +35,7 @@
   /* Vertical space taken by everything above and just below the board
      (heading, title, word, message, progress); the found words may
      scroll below. */
-  --chrome-height: 14rem;
+  --chrome-height: 14.25rem;
   color-scheme: light dark;
 }
 
@@ -119,6 +119,20 @@ h1::before {
   line-height: 1.25rem;
 }
 
+/* Progress with the Share button beside it. The height is fixed so
+   that the button, which is taller than the text, moves nothing. */
+#status {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: center;
+  height: 1.75rem;
+}
+
+#status #progress {
+  margin: 0;
+}
+
 #word,
 #message {
   min-height: 2rem;
@@ -146,7 +160,8 @@ h1::before {
 }
 
 #message[data-outcome="found"],
-#message[data-outcome="bonus"] {
+#message[data-outcome="bonus"],
+#message[data-outcome="copied"] {
   color: var(--glaze-ink);
 }
 
@@ -333,6 +348,10 @@ body.complete #message[data-outcome="found"] {
   position: absolute;
   top: 0.6rem;
   right: 0;
+}
+
+#show-puzzles,
+#share {
   padding: 0.2rem 0.65rem;
   border: 1.5px solid var(--glaze);
   border-radius: 0.35rem;
@@ -347,11 +366,13 @@ body.complete #message[data-outcome="found"] {
   color: var(--glaze-letter);
 }
 
-#show-puzzles[hidden] {
+#show-puzzles[hidden],
+#share[hidden] {
   display: none;
 }
 
 #show-puzzles:focus-visible,
+#share:focus-visible,
 #puzzles a:focus-visible {
   outline: 2px solid var(--celadon-edge);
   outline-offset: 2px;
@@ -455,7 +476,7 @@ body.notice #board,
 body.notice #title,
 body.notice #word,
 body.notice #message,
-body.notice #progress,
+body.notice #status,
 body.notice #found {
   display: none;
 }

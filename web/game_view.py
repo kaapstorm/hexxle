@@ -46,12 +46,16 @@ class GameView:
         self.refresh()
 
     def show_outcome(self, outcome, word):
-        """Say what became of ``word``, until the message fades out."""
+        """Say what became of ``word``."""
         text = MESSAGES[outcome]
         if outcome == FOUND and self._game.is_complete():
             text = COMPLETE_MESSAGE
-        self._message.dataset.outcome = outcome
-        self._message.textContent = text % word
+        self.show_message(text % word, outcome)
+
+    def show_message(self, text, kind):
+        """Show ``text`` until it fades out; ``kind`` picks its style."""
+        self._message.dataset.outcome = kind
+        self._message.textContent = text
         self._message.classList.remove(FADING)
         self._pending += 1
         window.setTimeout(self._fade_proxy, MESSAGE_MS)

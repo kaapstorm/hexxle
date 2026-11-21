@@ -12,6 +12,25 @@ STORAGE_KEY = 'hexxle:2026-11-20'
 # How long a message shows before it fades: MESSAGE_MS in game_view.py.
 MESSAGE_MS = 1800
 
+# Stand-ins for the clipboard, which records what is copied, refuses, or
+# is missing as it is on a page that is not https or localhost.
+RECORD_CLIPBOARD = """
+Object.defineProperty(navigator, 'clipboard', {value: {
+    writeText: function (text) {
+        window.copied = text;
+        return Promise.resolve();
+    },
+}});
+"""
+REFUSE_CLIPBOARD = """
+Object.defineProperty(navigator, 'clipboard', {value: {
+    writeText: function () { return Promise.reject(new Error('no')); },
+}});
+"""
+NO_CLIPBOARD = """
+Object.defineProperty(navigator, 'clipboard', {value: undefined});
+"""
+
 BREAK_STORAGE = """
 Storage.prototype.getItem = function () { throw new Error('no storage'); };
 Storage.prototype.setItem = function () { throw new Error('no storage'); };
@@ -211,3 +230,45 @@ def plays_when_storage_is_unavailable():
             progress = page.locator('#progress').text_content()
     assert progress == '1 of 2 words'
     assert text == 'Found EXACT!'
+
+
+def share(page: Page) -> tuple[str | None, str]:
+    """Press Share and return the message it leads to."""
+    page.locator('#share').click()
+    page.wait_for_function(
+        "document.querySelector('#message').textContent !== ''")
+    return shown_message(page)
+
+
+@test
+def sharing_copies_progress_and_a_link_to_the_puzzle():
+    with site_server(puzzles_dir=PUZZLES) as base:
+        with open_page(base, init_script=RECORD_CLIPBOARD) as page:
+            play(page, 'EXACT')
+            page.clock.install()
+            page.clock.run_for(5000)
+            message = share(page)
+            copied = page.evaluate('window.copied')
+    assert message == ('copied', 'Copied to clipboard')
+    assert copied == (
+        'Hexxle · 20 Nov 2026\n'
+        'Found 1 of 2 words.\n'
+        f'{base}?p=2026-11-20')
+
+
+@test
+def sharing_works_before_any_word_is_found():
+    with site_server(puzzles_dir=PUZZLES) as base:
+        with open_page(base, init_script=RECORD_CLIPBOARD) as page:
+            share(page)
+            copied = page.evaluate('window.copied')
+    assert copied.split('\n')[1] == 'Found 0 of 2 words.'
+
+
+@test
+@params([(REFUSE_CLIPBOARD,), (NO_CLIPBOARD,)])
+def sharing_says_when_it_could_not_copy(script):
+    with site_server(puzzles_dir=PUZZLES) as base:
+        with open_page(base, init_script=script) as page:
+            message = share(page)
+    assert message == ('not_copied', 'Could not copy')
