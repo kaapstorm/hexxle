@@ -11,14 +11,15 @@ from dom import element
 from hexxle.core.game import ALREADY, BONUS, FOUND, NOT_A_WORD, TOO_SHORT
 from hexxle.core.puzzle import describe_identifier
 
+# Each takes the submitted word.
 MESSAGES = {
-    TOO_SHORT: 'Too short',
-    FOUND: 'Found!',
-    BONUS: 'Bonus word!',
-    ALREADY: 'Already found',
-    NOT_A_WORD: 'Not in this puzzle',
+    TOO_SHORT: '%s is too short',
+    FOUND: 'Found %s!',
+    BONUS: '%s is a bonus word!',
+    ALREADY: 'Already found %s',
+    NOT_A_WORD: '%s is not in this puzzle',
 }
-COMPLETE_MESSAGE = 'Puzzle complete!'
+COMPLETE_MESSAGE = 'Found %s. Puzzle complete!'
 
 
 class GameView:
@@ -34,12 +35,13 @@ class GameView:
         document.querySelector('#title').textContent = title
         self.refresh()
 
-    def show_outcome(self, outcome):
+    def show_outcome(self, outcome, word):
+        """Say what became of ``word``."""
         text = MESSAGES[outcome]
         if outcome == FOUND and self._game.is_complete():
             text = COMPLETE_MESSAGE
         self._message.dataset.outcome = outcome
-        self._message.textContent = text
+        self._message.textContent = text % word
 
     def refresh(self):
         """Redraw progress, the found words and completion."""

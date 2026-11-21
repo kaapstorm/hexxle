@@ -49,7 +49,7 @@ puzzle_list = None
 
 def on_submit(word):
     outcome = game.submit(word)
-    game_view.show_outcome(outcome)
+    game_view.show_outcome(outcome, word)
     if outcome in (FOUND, BONUS):
         store.save(ident, game)
         game_view.refresh()

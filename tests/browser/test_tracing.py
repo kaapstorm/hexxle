@@ -68,7 +68,7 @@ def releasing_submits_the_word():
         message = page.locator('#message').text_content()
         word = page.locator('#word').text_content()
         marked = page.locator('g.tile.in-path').count()
-    assert message == 'Found!'
+    assert message == 'Found EXACT!'
     assert word == ''
     assert marked == 0
 
@@ -108,7 +108,7 @@ def dragging_back_onto_the_board_disarms():
         page.mouse.up()
         message = page.locator('#message').text_content()
     assert 'cancelling' not in classes.split()
-    assert message == 'Too short'
+    assert message == 'TAX is too short'
 
 
 @test
@@ -120,7 +120,7 @@ def releasing_beside_the_board_still_submits():
         page.mouse.move(box['x'] + box['width'] + BESIDE_PX, y, steps=5)
         page.mouse.up()
         message = page.locator('#message').text_content()
-    assert message == 'Too short'
+    assert message == 'XL is too short'
 
 
 @test
@@ -145,7 +145,7 @@ def a_second_pointer_is_ignored():
         page.mouse.move(*centre(tile(page, X)), steps=5)
         page.mouse.up()
         message = page.locator('#message').text_content()
-    assert message == 'Too short'
+    assert message == 'TAX is too short'
 
 
 @test

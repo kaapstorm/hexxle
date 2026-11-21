@@ -50,10 +50,10 @@ def shows_the_date():
 
 @test
 @params([
-    ('TAX', 'too_short', 'Too short'),
-    ('EXACT', 'found', 'Found!'),
-    ('LUXE', 'bonus', 'Bonus word!'),
-    ('ACED', 'not_a_word', 'Not in this puzzle'),
+    ('TAX', 'too_short', 'TAX is too short'),
+    ('EXACT', 'found', 'Found EXACT!'),
+    ('LUXE', 'bonus', 'LUXE is a bonus word!'),
+    ('ACED', 'not_a_word', 'ACED is not in this puzzle'),
 ])
 def reports_each_outcome(word, outcome, text):
     with site_server(puzzles_dir=PUZZLES) as base, open_page(base) as page:
@@ -68,7 +68,7 @@ def reports_a_repeat():
         play(page, 'EXACT')
         outcome, text = play(page, 'EXACT')
     assert outcome == 'already'
-    assert text == 'Already found'
+    assert text == 'Already found EXACT'
 
 
 @test
@@ -111,9 +111,9 @@ def completes_the_puzzle():
         _, text = play(page, 'TAXI')
         body_classes = page.locator('body').get_attribute('class') or ''
         _, bonus_text = play(page, 'LUXE')
-    assert text == 'Puzzle complete!'
+    assert text == 'Found TAXI. Puzzle complete!'
     assert 'complete' in body_classes.split()
-    assert bonus_text == 'Bonus word!'
+    assert bonus_text == 'LUXE is a bonus word!'
 
 
 @test
@@ -126,7 +126,7 @@ def remembers_progress_across_reloads():
         outcome, text = play(page, 'EXACT')
     assert progress == '1 of 2 words'
     assert outcome == 'already'
-    assert text == 'Already found'
+    assert text == 'Already found EXACT'
 
 
 @test
@@ -139,7 +139,7 @@ def plays_despite_corrupt_saved_progress(value):
             progress = page.locator('#progress').text_content()
             _, text = play(page, 'EXACT')
     assert progress == '0 of 2 words'
-    assert text == 'Found!'
+    assert text == 'Found EXACT!'
 
 
 @test
@@ -150,4 +150,4 @@ def plays_when_storage_is_unavailable():
             _, text = play(page, 'EXACT')
             progress = page.locator('#progress').text_content()
     assert progress == '1 of 2 words'
-    assert text == 'Found!'
+    assert text == 'Found EXACT!'
