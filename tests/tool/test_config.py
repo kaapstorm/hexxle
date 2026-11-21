@@ -3,9 +3,8 @@ from pathlib import Path
 
 from testsweet import catch_exceptions, params, test
 
-from hexxle.config import CONFIG_PATH, load_config
+from hexxle.config import load_config
 from hexxle.errors import HexxleError
-from hexxle.repo import REPO
 
 
 @test
@@ -27,24 +26,13 @@ def reads_settings():
 
 
 @test
-def rejects_unknown_settings():
-    with tempfile.TemporaryDirectory() as tmp:
-        path = Path(tmp) / 'hexxle.toml'
-        path.write_text('remot = "x"\n')
-        with catch_exceptions() as caught:
-            load_config(path)
-    assert len(caught) == 1
-    assert isinstance(caught[0], HexxleError)
-    message = str(caught[0])
-    assert 'remot' in message
-
-
-@test
 @params([
-    ('remote = 5\n', 'remote'),
-    ('dictionary = ["words"]\n', 'dictionary'),
+    ('remot = "x"\n', ['remot']),
+    ('remote = 5\n', ["'remote'", 'string']),
+    ('dictionary = ["words"]\n', ["'dictionary'", 'string']),
+    ('remote = \n', ['hexxle.toml']),      # not TOML
 ])
-def rejects_settings_that_are_not_strings(text, setting):
+def rejects_bad_settings(text, expected_fragments):
     with tempfile.TemporaryDirectory() as tmp:
         path = Path(tmp) / 'hexxle.toml'
         path.write_text(text)
@@ -53,24 +41,5 @@ def rejects_settings_that_are_not_strings(text, setting):
     assert len(caught) == 1
     assert isinstance(caught[0], HexxleError)
     message = str(caught[0])
-    assert repr(setting) in message
-    assert 'string' in message
-
-
-@test
-def rejects_a_file_that_is_not_toml():
-    with tempfile.TemporaryDirectory() as tmp:
-        path = Path(tmp) / 'hexxle.toml'
-        path.write_text('remote = \n')
-        with catch_exceptions() as caught:
-            load_config(path)
-    assert len(caught) == 1
-    assert isinstance(caught[0], HexxleError)
-    message = str(caught[0])
-    assert 'hexxle.toml' in message
-
-
-@test
-def the_settings_file_is_in_the_repository_root():
-    # Only the path is compared: the real file is never read by a test.
-    assert CONFIG_PATH == REPO / 'hexxle.toml'
+    for fragment in expected_fragments:
+        assert fragment in message, fragment

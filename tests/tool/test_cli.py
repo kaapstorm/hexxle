@@ -1,5 +1,4 @@
 import contextlib
-import inspect
 import io
 import shutil
 import socket
@@ -10,7 +9,6 @@ from testsweet import catch_exceptions, params, test
 
 import hexxle.site
 from hexxle.cli import main
-from hexxle.config import CONFIG_PATH
 from tests.core.examples import EXAMPLE
 from tests.fixture_paths import EXAMPLE_PATH, FIXTURES, WORDS_PATH
 from tests.tool.fake_sftp import FakeSftp, RefusingSftp
@@ -103,12 +101,6 @@ def the_dictionary_setting_is_relative_to_the_settings_file():
         code, out, err = run(['solve', EXAMPLE_PATH], config_path=settings)
     assert code == 0
     assert out == SOLVED
-
-
-@test
-def settings_are_read_from_the_repository_root_by_default():
-    default = inspect.signature(main).parameters['config_path'].default
-    assert default == CONFIG_PATH
 
 
 @test

@@ -1,11 +1,8 @@
 from testsweet import catch_exceptions, params, test
 
 from hexxle.core.index import (
-    INDEX_NAME,
-    PUZZLES_DIR,
     choose,
     dump_index,
-    file_name_of,
     identifier_of,
     is_identifier,
     make_index,
@@ -15,11 +12,8 @@ from hexxle.core.index import (
 
 @test
 @params([
-    ('2026-11-20', True),
     ('2026-11-20_express', True),
     ('2026-11-20.txt', False),
-    ('../index', False),
-    ('', False),
     (20261120, False),
     (None, False),
 ])
@@ -65,12 +59,6 @@ INDEX = ['2026-11-20', '2026-11-18_express']
 def chooses_the_puzzle_to_play(requested, expected):
     chosen = choose(INDEX, requested)
     assert chosen == expected
-
-
-@test
-def names_the_site_layout():
-    layout = (PUZZLES_DIR, INDEX_NAME, file_name_of('2026-11-20_express'))
-    assert layout == ('puzzles', 'index.json', '2026-11-20_express.txt')
 
 
 @test

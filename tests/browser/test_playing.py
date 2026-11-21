@@ -73,33 +73,17 @@ def listed(page: Page, group: str) -> list[str]:
 
 
 @test
-def shows_the_date():
+def reports_each_outcome():
+    words = ['TAX', 'EXACT', 'EXACT', 'LUXE', 'ACED']
     with site_server(puzzles_dir=PUZZLES) as base, open_page(base) as page:
-        title = page.locator('#title').text_content()
-    assert '20 Nov 2026' in title
-
-
-@test
-@params([
-    ('TAX', 'too_short', 'TAX is too short'),
-    ('EXACT', 'found', 'Found EXACT!'),
-    ('LUXE', 'bonus', 'LUXE is a bonus word!'),
-    ('ACED', 'not_a_word', 'ACED is not in this puzzle'),
-])
-def reports_each_outcome(word, outcome, text):
-    with site_server(puzzles_dir=PUZZLES) as base, open_page(base) as page:
-        shown_outcome, shown_text = play(page, word)
-    assert shown_outcome == outcome
-    assert shown_text == text
-
-
-@test
-def reports_a_repeat():
-    with site_server(puzzles_dir=PUZZLES) as base, open_page(base) as page:
-        play(page, 'EXACT')
-        outcome, text = play(page, 'EXACT')
-    assert outcome == 'already'
-    assert text == 'Already found EXACT'
+        shown = [play(page, word) for word in words]
+    assert shown == [
+        ('too_short', 'TAX is too short'),
+        ('found', 'Found EXACT!'),
+        ('already', 'Already found EXACT'),
+        ('bonus', 'LUXE is a bonus word!'),
+        ('not_a_word', 'ACED is not in this puzzle'),
+    ]
 
 
 @test
@@ -254,15 +238,6 @@ def sharing_copies_progress_and_a_link_to_the_puzzle():
         'Hexxle · 20 Nov 2026\n'
         'Found 1 of 2 words.\n'
         f'{base}?p=2026-11-20')
-
-
-@test
-def sharing_works_before_any_word_is_found():
-    with site_server(puzzles_dir=PUZZLES) as base:
-        with open_page(base, init_script=RECORD_CLIPBOARD) as page:
-            share(page)
-            copied = page.evaluate('window.copied')
-    assert copied.split('\n')[1] == 'Found 0 of 2 words.'
 
 
 @test

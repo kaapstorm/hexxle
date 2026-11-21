@@ -1,4 +1,4 @@
-from testsweet import test
+from testsweet import params, test
 
 from hexxle.core.puzzle import parse_puzzle
 from hexxle.core.trace import Trace
@@ -13,34 +13,21 @@ def started(*positions):
     return trace
 
 
-@test
-def extends_through_neighbours():
-    word = started((1, 0), (3, 0), (4, 1)).word()
-    assert word == 'TAX'
+T, A, C, X, N = (1, 0), (3, 0), (2, 1), (4, 1), (6, 3)
 
 
 @test
-def ignores_a_tile_that_is_not_a_neighbour():
-    trace = started((1, 0))
-    changed = trace.move_to((6, 3))
+@params([
+    ([T, A], X, True, 'TAX'),       # a neighbour extends the trace
+    ([T], N, False, 'T'),           # not a neighbour
+    ([T, A, X], A, True, 'TA'),     # back one tile removes a letter
+    ([T, A, C], T, False, 'TAC'),   # already used, and not the last tile
+])
+def moves_to_a_tile(path, pos, expected_changed, expected_word):
+    trace = started(*path)
+    changed = trace.move_to(pos)
     word = trace.word()
-    assert (changed, word) == (False, 'T')
-
-
-@test
-def moving_back_one_tile_removes_the_last_letter():
-    trace = started((1, 0), (3, 0), (4, 1))
-    changed = trace.move_to((3, 0))
-    word = trace.word()
-    assert (changed, word) == (True, 'TA')
-
-
-@test
-def ignores_an_already_used_tile():
-    trace = started((1, 0), (3, 0), (2, 1))
-    changed = trace.move_to((1, 0))
-    word = trace.word()
-    assert (changed, word) == (False, 'TAC')
+    assert (changed, word) == (expected_changed, expected_word)
 
 
 @test

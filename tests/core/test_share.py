@@ -12,25 +12,23 @@ def game(found=(), text=EXAMPLE):
     return Game(parse_puzzle(text), found)
 
 
+ONE_REQUIRED = 'S T O P\n S\n---\nSTOP\n--- bonus\nPOTS\nTOPS\n'
+
+
 @test
 @params([
-    ((), 'Found 0 of 2 words.'),
-    (('EXACT',), 'Found 1 of 2 words.'),
-    (('LUXE',), 'Found 0 of 2 words and 1 bonus word.'),
-    (('EXACT', 'TAXI'), 'Puzzle completed! Found 2 words.'),
-    (('EXACT', 'TAXI', 'LUXE'),
+    (EXAMPLE, (), 'Found 0 of 2 words.'),
+    (EXAMPLE, ('EXACT',), 'Found 1 of 2 words.'),
+    (EXAMPLE, ('LUXE',), 'Found 0 of 2 words and 1 bonus word.'),
+    (EXAMPLE, ('EXACT', 'TAXI'), 'Puzzle completed! Found 2 words.'),
+    (EXAMPLE, ('EXACT', 'TAXI', 'LUXE'),
      'Puzzle completed! Found 2 words and 1 bonus word.'),
+    (ONE_REQUIRED, (), 'Found 0 of 1 word.'),
+    (ONE_REQUIRED, ('STOP', 'POTS', 'TOPS'),
+     'Puzzle completed! Found 1 word and 2 bonus words.'),
 ])
-def describes_progress(found, line):
-    assert progress_line(game(found)) == line
-
-
-@test
-def counts_are_singular_or_plural():
-    text = 'S T O P\n S\n---\nSTOP\n--- bonus\nPOTS\nTOPS\n'
-    assert progress_line(game(text=text)) == 'Found 0 of 1 word.'
-    assert progress_line(game(('STOP', 'POTS', 'TOPS'), text)) == (
-        'Puzzle completed! Found 1 word and 2 bonus words.')
+def describes_progress(text, found, line):
+    assert progress_line(game(found, text)) == line
 
 
 @test
