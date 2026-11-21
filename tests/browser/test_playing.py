@@ -16,9 +16,14 @@ Storage.prototype.setItem = function () { throw new Error('no storage'); };
 """
 
 
-def play(page: Page, word: str) -> tuple[str, str]:
+def play(page: Page, word: str) -> tuple[str | None, str]:
     """Trace ``word`` and return ``#message``'s outcome and text."""
     trace(page, PATHS[word])
+    return shown_message(page)
+
+
+def shown_message(page: Page) -> tuple[str | None, str]:
+    """``#message``'s outcome and text."""
     message = page.locator('#message')
     return message.get_attribute('data-outcome'), message.text_content()
 
@@ -69,6 +74,34 @@ def reports_a_repeat():
         outcome, text = play(page, 'EXACT')
     assert outcome == 'already'
     assert text == 'Already found EXACT'
+
+
+@test
+def the_message_disappears_after_two_seconds():
+    with site_server(puzzles_dir=PUZZLES) as base, open_page(base) as page:
+        page.clock.install()
+        play(page, 'EXACT')
+        page.clock.run_for(1900)
+        before = shown_message(page)
+        page.clock.run_for(200)
+        after = shown_message(page)
+    assert before == ('found', 'Found EXACT!')
+    assert after == (None, '')
+
+
+@test
+def a_new_message_gets_its_full_two_seconds():
+    with site_server(puzzles_dir=PUZZLES) as base, open_page(base) as page:
+        page.clock.install()
+        play(page, 'EXACT')
+        page.clock.run_for(1500)
+        play(page, 'LUXE')
+        page.clock.run_for(1900)
+        before = shown_message(page)
+        page.clock.run_for(200)
+        after = shown_message(page)
+    assert before == ('bonus', 'LUXE is a bonus word!')
+    assert after == (None, '')
 
 
 @test
