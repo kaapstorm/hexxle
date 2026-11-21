@@ -1,0 +1,8 @@
+# The workflows pin each action to a commit, which never updates on its
+# own. Dependabot proposes the new commit when an action has a release.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
