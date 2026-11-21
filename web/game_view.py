@@ -21,15 +21,21 @@ MESSAGES = {
     NOT_A_WORD: '%s is not in this puzzle',
 }
 COMPLETE_MESSAGE = 'Found %s. Puzzle complete!'
-MESSAGE_MS = 2000
+# A message shows for MESSAGE_MS, then fades for FADE_MS, which matches
+# the transition on ``#message.fading`` in style.css.
+MESSAGE_MS = 1800
+FADE_MS = 400
+FADING = 'fading'
 
 
 class GameView:
     def __init__(self, game, ident):
         self._game = game
         self._message = document.querySelector('#message')
+        self._fade_proxy = create_proxy(self._fade_message)
         self._clear_proxy = create_proxy(self._clear_message)
-        self._clear_timers = 0
+        # Messages shown and not yet due to be cleared.
+        self._pending = 0
         self._progress = document.querySelector('#progress')
         self._found = document.querySelector('#found')
         date, label = describe_identifier(ident)
@@ -40,21 +46,29 @@ class GameView:
         self.refresh()
 
     def show_outcome(self, outcome, word):
-        """Say what became of ``word``, for ``MESSAGE_MS`` milliseconds."""
+        """Say what became of ``word``, until the message fades out."""
         text = MESSAGES[outcome]
         if outcome == FOUND and self._game.is_complete():
             text = COMPLETE_MESSAGE
         self._message.dataset.outcome = outcome
         self._message.textContent = text % word
-        self._clear_timers += 1
-        window.setTimeout(self._clear_proxy, MESSAGE_MS)
+        self._message.classList.remove(FADING)
+        self._pending += 1
+        window.setTimeout(self._fade_proxy, MESSAGE_MS)
+        window.setTimeout(self._clear_proxy, MESSAGE_MS + FADE_MS)
+
+    # Only the newest message's timers fade and clear, so that a message
+    # which replaced another gets its full time.
+
+    def _fade_message(self, *_args):
+        if self._pending == 1:
+            self._message.classList.add(FADING)
 
     def _clear_message(self, *_args):
-        # Only the newest message's timer clears, so that a message which
-        # replaced another gets its full time.
-        self._clear_timers -= 1
-        if self._clear_timers:
+        self._pending -= 1
+        if self._pending:
             return
+        self._message.classList.remove(FADING)
         self._message.removeAttribute('data-outcome')
         self._message.textContent = ''
 

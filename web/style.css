@@ -150,6 +150,18 @@ h1::before {
   color: var(--glaze-ink);
 }
 
+/* A message fades out before it is cleared; a new one appears at once.
+   The duration matches FADE_MS in game_view.py. */
+#message.fading {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  #message.fading {
+    transition: opacity 0.4s ease-out;
+  }
+}
+
 /* Fill the width, but never so tall that the board leaves the screen.
    --aspect (width / height) is set on the element when it is drawn. */
 #board {

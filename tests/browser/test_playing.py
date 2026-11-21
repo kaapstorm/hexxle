@@ -28,6 +28,11 @@ def shown_message(page: Page) -> tuple[str | None, str]:
     return message.get_attribute('data-outcome'), message.text_content()
 
 
+def is_fading(page: Page) -> bool:
+    classes = page.locator('#message').get_attribute('class') or ''
+    return 'fading' in classes.split()
+
+
 def hints(page: Page, pos: tuple[int, int]) -> tuple[str, str]:
     group = tile(page, pos)
     return (
@@ -77,16 +82,19 @@ def reports_a_repeat():
 
 
 @test
-def the_message_disappears_after_two_seconds():
+def the_message_fades_after_two_seconds_and_is_cleared():
     with site_server(puzzles_dir=PUZZLES) as base, open_page(base) as page:
         page.clock.install()
         play(page, 'EXACT')
         page.clock.run_for(1900)
-        before = shown_message(page)
+        shown = shown_message(page), is_fading(page)
         page.clock.run_for(200)
-        after = shown_message(page)
-    assert before == ('found', 'Found EXACT!')
-    assert after == (None, '')
+        fading = shown_message(page), is_fading(page)
+        page.clock.run_for(400)
+        cleared = shown_message(page), is_fading(page)
+    assert shown == (('found', 'Found EXACT!'), False)
+    assert fading == (('found', 'Found EXACT!'), True)
+    assert cleared == ((None, ''), False)
 
 
 @test
@@ -97,11 +105,28 @@ def a_new_message_gets_its_full_two_seconds():
         page.clock.run_for(1500)
         play(page, 'LUXE')
         page.clock.run_for(1900)
-        before = shown_message(page)
+        shown = shown_message(page), is_fading(page)
         page.clock.run_for(200)
-        after = shown_message(page)
-    assert before == ('bonus', 'LUXE is a bonus word!')
-    assert after == (None, '')
+        fading = is_fading(page)
+        page.clock.run_for(400)
+        cleared = shown_message(page)
+    assert shown == (('bonus', 'LUXE is a bonus word!'), False)
+    assert fading
+    assert cleared == (None, '')
+
+
+@test
+def a_message_shown_during_a_fade_is_not_faded():
+    with site_server(puzzles_dir=PUZZLES) as base, open_page(base) as page:
+        page.clock.install()
+        play(page, 'EXACT')
+        page.clock.run_for(2100)
+        was_fading = is_fading(page)
+        play(page, 'LUXE')
+        page.clock.run_for(1000)
+        shown = shown_message(page), is_fading(page)
+    assert was_fading
+    assert shown == (('bonus', 'LUXE is a bonus word!'), False)
 
 
 @test
