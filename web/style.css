@@ -1,8 +1,8 @@
 /* Hexxle: glazed hexagonal tiles, set in lime plaster.
 
-   The tiles are teal glaze with painted serif capitals. A traced tile
-   turns saffron, a tile no word needs any more is left unglazed, and a
-   finished board is rimmed in saffron. Everything else on the page is
+   The tiles are plum glaze with painted serif capitals. A traced tile
+   turns celadon, a tile no word needs any more is left unglazed, and a
+   finished board is rimmed in celadon. Everything else on the page is
    quiet so the board is the one thing that stands out.
 
    The boxes above the board have fixed line heights, so the board does
@@ -11,24 +11,24 @@
    to paint. */
 
 :root {
-  --plaster: #e9ece6;
-  --ink: #18302d;
-  --muted: #5b6e6a;
-  --glaze: #1e6b63;
-  --glaze-edge: #114640;
+  --plaster: #e7ebf0;
+  --ink: #2f2737;
+  --muted: #6b6675;
+  --glaze: #67537f;
+  --glaze-edge: #433554;
   --glaze-letter: #f6f2e3;
-  --saffron: #edb238;
-  --saffron-edge: #b27a12;
-  --saffron-letter: #1d2523;
-  --biscuit: #dde2db;
-  --biscuit-edge: #a9b7b2;
-  --biscuit-letter: #748884;
-  --trace: rgba(17, 32, 30, 0.5);
+  --celadon: #6be1bb;
+  --celadon-edge: #009775;
+  --celadon-letter: #242228;
+  --biscuit: #dce1e8;
+  --biscuit-edge: #b3b1be;
+  --biscuit-letter: #85808f;
+  --trace: rgba(31, 26, 37, 0.5);
   --oxide: #b03a21;
-  --glaze-ink: #1e6b63;
-  --gold-ink: #8f5f06;
-  --panel: #f4f6f1;
-  --shadow: rgba(17, 40, 37, 0.22);
+  --glaze-ink: #67537f;
+  --celadon-ink: #007253;
+  --panel: #f1f6fa;
+  --shadow: rgba(38, 32, 47, 0.22);
   --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino,
     'URW Palladio L', P052, 'Book Antiqua', Georgia, serif;
   --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -41,23 +41,23 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --plaster: #0f1d1b;
-    --ink: #e2e9e4;
-    --muted: #93a7a2;
-    --glaze: #237a70;
-    --glaze-edge: #3f9d91;
+    --plaster: #1c1821;
+    --ink: #e5e7ee;
+    --muted: #a49faf;
+    --glaze: #755f91;
+    --glaze-edge: #977eb8;
     --glaze-letter: #f8f5ea;
-    --saffron: #f0b940;
-    --saffron-edge: #ffd77a;
-    --saffron-letter: #172220;
-    --biscuit: #172b28;
-    --biscuit-edge: #2f4a46;
-    --biscuit-letter: #7d938e;
-    --trace: rgba(14, 26, 24, 0.6);
+    --celadon: #6fe4bf;
+    --celadon-edge: #abf7dc;
+    --celadon-letter: #211e26;
+    --biscuit: #292431;
+    --biscuit-edge: #484053;
+    --biscuit-letter: #908a9b;
+    --trace: rgba(25, 21, 30, 0.6);
     --oxide: #f07a5c;
-    --glaze-ink: #5fbcae;
-    --gold-ink: #f0b940;
-    --panel: #162825;
+    --glaze-ink: #b49bd9;
+    --celadon-ink: #6fe4bf;
+    --panel: #26212e;
     --shadow: rgba(0, 0, 0, 0.5);
   }
 }
@@ -203,16 +203,16 @@ h1::before {
   fill: var(--biscuit-letter);
 }
 
-/* In the path, dimmed or not: bright saffron with dark lettering. */
+/* In the path, dimmed or not: bright celadon with dark lettering. */
 #board .in-path polygon,
 #board .dimmed.in-path polygon {
-  fill: var(--saffron);
-  stroke: var(--saffron-edge);
+  fill: var(--celadon);
+  stroke: var(--celadon-edge);
 }
 
 #board .in-path text,
 #board .dimmed.in-path text {
-  fill: var(--saffron-letter);
+  fill: var(--celadon-letter);
 }
 
 #trace-line {
@@ -266,9 +266,9 @@ h1::before {
   color: var(--muted);
 }
 
-/* Complete: the finished board is rimmed in saffron. */
+/* Complete: the finished board is rimmed in celadon. */
 body.complete #board .dimmed polygon {
-  stroke: var(--saffron);
+  stroke: var(--celadon);
 }
 
 body.complete #progress {
@@ -277,10 +277,10 @@ body.complete #progress {
 }
 
 body.complete #message[data-outcome="found"] {
-  color: var(--gold-ink);
+  color: var(--celadon-ink);
 }
 
-/* The celebration: one sweep of saffron glaze across the tiles, once.
+/* The celebration: one sweep of celadon glaze across the tiles, once.
    Each tile's delay comes from its place in a repeating run of four
    tiles, not from its row. */
 @media (prefers-reduced-motion: no-preference) {
@@ -307,7 +307,7 @@ body.complete #message[data-outcome="found"] {
 
 @keyframes glaze-sweep {
   40% {
-    fill: var(--saffron);
+    fill: var(--celadon);
   }
 }
 
@@ -341,7 +341,7 @@ body.complete #message[data-outcome="found"] {
 
 #show-puzzles:focus-visible,
 #puzzles a:focus-visible {
-  outline: 2px solid var(--saffron);
+  outline: 2px solid var(--celadon-edge);
   outline-offset: 2px;
 }
 
@@ -380,7 +380,7 @@ body.complete #message[data-outcome="found"] {
   border-top: 1px solid var(--biscuit-edge);
 }
 
-/* The puzzle being played is marked with a saffron tile; the others
+/* The puzzle being played is marked with a celadon tile; the others
    keep the same indent so the dates line up. */
 #puzzles a::before {
   content: '';
@@ -389,7 +389,7 @@ body.complete #message[data-outcome="found"] {
   width: 0.7rem;
   height: 0.8rem;
   visibility: hidden;
-  background: var(--saffron);
+  background: var(--celadon);
   clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
 }
 
