@@ -1,5 +1,7 @@
 from hexxle.core.paths import MIN_WORD_LENGTH, find_paths
 
+# One letter: a tap on a tile, not an attempt at a word.
+SINGLE_LETTER = 'single_letter'
 TOO_SHORT = 'too_short'
 FOUND = 'found'
 BONUS = 'bonus'
@@ -50,6 +52,8 @@ class Game:
             self._adjust(word, -1)
 
     def submit(self, word):
+        if len(word) < 2:
+            return SINGLE_LETTER
         if len(word) < MIN_WORD_LENGTH:
             return TOO_SHORT
         if word in self.found:

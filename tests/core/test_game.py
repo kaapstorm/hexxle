@@ -1,7 +1,7 @@
 from testsweet import params, test
 
 from hexxle.core.game import (
-    ALREADY, BONUS, FOUND, NOT_A_WORD, TOO_SHORT, Game)
+    ALREADY, BONUS, FOUND, NOT_A_WORD, SINGLE_LETTER, TOO_SHORT, Game)
 from hexxle.core.puzzle import parse_puzzle
 from tests.core.examples import EXAMPLE
 
@@ -19,9 +19,10 @@ def two_s(words):
 def classifies_each_submission():
     g = game()
     outcomes = [g.submit(w) for w in
-                ['TAX', 'EXACT', 'EXACT', 'LUXE', 'LUXE', 'ACED']]
-    assert outcomes == [TOO_SHORT, FOUND, ALREADY, BONUS, ALREADY,
-                        NOT_A_WORD]
+                ['T', 'TA', 'TAX', 'EXACT', 'EXACT', 'LUXE', 'LUXE',
+                 'ACED']]
+    assert outcomes == [SINGLE_LETTER, TOO_SHORT, TOO_SHORT, FOUND,
+                        ALREADY, BONUS, ALREADY, NOT_A_WORD]
 
 
 @test

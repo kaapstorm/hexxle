@@ -9,7 +9,14 @@ from pyscript import document, window
 from pyscript.ffi import create_proxy
 
 from dom import element
-from hexxle.core.game import ALREADY, BONUS, FOUND, NOT_A_WORD, TOO_SHORT
+from hexxle.core.game import (
+    ALREADY,
+    BONUS,
+    FOUND,
+    NOT_A_WORD,
+    SINGLE_LETTER,
+    TOO_SHORT,
+)
 from hexxle.core.puzzle import describe_identifier
 
 # Each is formatted with the submitted word and the emoji the puzzle
@@ -47,7 +54,9 @@ class GameView:
         self.refresh()
 
     def show_outcome(self, outcome, word):
-        """Say what became of ``word``."""
+        """Say what became of ``word``; a single letter gets no message."""
+        if outcome == SINGLE_LETTER:
+            return
         text = MESSAGES[outcome]
         if outcome == FOUND and self._game.is_complete():
             text = COMPLETE_MESSAGE

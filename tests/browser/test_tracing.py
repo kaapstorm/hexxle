@@ -124,6 +124,16 @@ def releasing_beside_the_board_still_submits():
 
 
 @test
+def tapping_one_tile_shows_no_message():
+    with site_server(puzzles_dir=PUZZLES) as base, open_page(base) as page:
+        trace(page, [T])
+        message = page.locator('#message').text_content()
+        word = page.locator('#word').text_content()
+    assert message == ''
+    assert word == ''
+
+
+@test
 def a_right_button_press_starts_no_trace():
     with site_server(puzzles_dir=PUZZLES) as base, open_page(base) as page:
         page.mouse.move(*centre(tile(page, T)))
