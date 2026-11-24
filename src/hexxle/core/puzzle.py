@@ -8,10 +8,13 @@ LABEL_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789_'
 
 
 class Puzzle:
-    def __init__(self, board, required, bonus):
+    def __init__(self, board, required, bonus, emoji=None):
         self.board = board
         self.required = required
         self.bonus = bonus
+        # The emoji that follows a word in the file, by word. Most words
+        # have none.
+        self.emoji = emoji or {}
 
 
 def _split_board(text):
@@ -28,12 +31,34 @@ def parse_board_only(text):
     return parse_board(lines[:board_end], first_line=1)
 
 
+def _parse_word_line(line, line_no):
+    """Split a stripped, non-empty word line into ``(word, emoji)``.
+
+    The emoji is whatever follows the word after a space, or ``''``. It
+    may not contain ASCII characters, so that a stray second word is an
+    error and not taken for an emoji.
+    """
+    parts = line.split()
+    word = parts[0]
+    emoji = ' '.join(parts[1:])
+    if not all(is_letter(char) for char in word):
+        raise PuzzleError(
+            'word %r must contain only letters A-Z' % word, line_no)
+    for char in emoji:
+        if char != ' ' and ord(char) < 128:
+            raise PuzzleError(
+                'only an emoji may follow word %r, not %r' % (word, emoji),
+                line_no)
+    return word.upper(), emoji
+
+
 def parse_puzzle(text):
     lines, board_end = _split_board(text)
     board = parse_board(lines[:board_end], first_line=1)
 
     required = []
     bonus = []
+    emoji = {}
     current = None
     seen = []
     for index in range(board_end, len(lines)):
@@ -55,12 +80,11 @@ def parse_puzzle(text):
             seen.append(name)
             current = required if name == 'required' else bonus
         elif line:
-            if not all(is_letter(char) for char in line):
-                raise PuzzleError(
-                    'word %r must contain only letters A-Z' % line,
-                    line_no)
-            current.append(line.upper())
-    return Puzzle(board, required, bonus)
+            word, word_emoji = _parse_word_line(line, line_no)
+            current.append(word)
+            if word_emoji:
+                emoji[word] = word_emoji
+    return Puzzle(board, required, bonus, emoji)
 
 
 def _duplicates(words):

@@ -33,6 +33,22 @@ def tolerates_line_endings_case_and_blank_lines(text):
 
 
 @test
+def reads_the_emoji_after_a_word():
+    text = EXAMPLE.replace('EXACT', 'exact \U0001f327\ufe0f').replace(
+        'LUXE', 'LUXE  \u2728 \U0001f48e ')
+    puzzle = parse_puzzle(text)
+    lists = (puzzle.required, puzzle.bonus)
+    assert lists == (['EXACT', 'TAXI'], ['LUXE'])
+    assert puzzle.emoji == {
+        'EXACT': '\U0001f327\ufe0f', 'LUXE': '\u2728 \U0001f48e'}
+
+
+@test
+def most_words_have_no_emoji():
+    assert parse_puzzle(EXAMPLE).emoji == {}
+
+
+@test
 def board_only_file_has_no_words():
     puzzle = parse_puzzle('A B\n C\n')
     lists = (puzzle.required, puzzle.bonus)
@@ -45,6 +61,9 @@ def board_only_file_has_no_words():
     ('A B\n C\n---\nABCD\n---\nABCE\n', 5),
     ('A B\n C\n--- bonus\nABCD\n', 3),
     ('A B\n C\n---\nAB-CD\n', 4),
+    ('A B\n C\n---\nABCD EFGH\n', 4),         # a second word, not an emoji
+    ('A B\n C\n---\nABCD \u2728 x\n', 4),
+    ('A B\n C\n---\n\u2728 ABCD\n', 4),        # the emoji comes second
     ('A B\nC\n---\nABCD\n', 2),
 ])
 def rejects_malformed_files(text, line):

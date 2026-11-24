@@ -12,15 +12,16 @@ from dom import element
 from hexxle.core.game import ALREADY, BONUS, FOUND, NOT_A_WORD, TOO_SHORT
 from hexxle.core.puzzle import describe_identifier
 
-# Each takes the submitted word.
+# Each is formatted with the submitted word and the emoji the puzzle
+# gives it, which is '' for most words.
 MESSAGES = {
-    TOO_SHORT: '%s is too short',
-    FOUND: 'Found %s!',
-    BONUS: '%s is a bonus word!',
-    ALREADY: 'Already found %s',
-    NOT_A_WORD: '%s is not in this puzzle',
+    TOO_SHORT: '{word} is too short',
+    FOUND: 'Found {word}! {emoji}',
+    BONUS: '{word} is a bonus word! {emoji}',
+    ALREADY: 'Already found {word}',
+    NOT_A_WORD: '{word} is not in this puzzle',
 }
-COMPLETE_MESSAGE = 'Found %s. Puzzle complete!'
+COMPLETE_MESSAGE = 'Found {word}. {emoji} Puzzle complete!'
 # A message shows for MESSAGE_MS, then fades for FADE_MS, which matches
 # the transition on ``#message.fading`` in style.css.
 MESSAGE_MS = 1800
@@ -50,7 +51,10 @@ class GameView:
         text = MESSAGES[outcome]
         if outcome == FOUND and self._game.is_complete():
             text = COMPLETE_MESSAGE
-        self.show_message(text % word, outcome)
+        emoji = self._game.puzzle.emoji.get(word, '')
+        text = text.format(word=word, emoji=emoji)
+        # Without an emoji, its place leaves a spare space.
+        self.show_message(' '.join(text.split()), outcome)
 
     def show_message(self, text, kind):
         """Show ``text`` until it fades out; ``kind`` picks its style."""

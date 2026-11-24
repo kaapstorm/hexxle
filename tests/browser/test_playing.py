@@ -1,11 +1,13 @@
 import json
+import tempfile
+from pathlib import Path
 
 from playwright.sync_api import Page
 from testsweet import params, test
 
 from hexxle.site import site_server
 from tests.browser.support import open_page, tile, trace, wait_until_ready
-from tests.core.examples import PATHS
+from tests.core.examples import EXAMPLE, PATHS
 from tests.fixture_paths import PUZZLES
 
 STORAGE_KEY = 'hexxle:2026-11-20'
@@ -83,6 +85,25 @@ def reports_each_outcome():
         ('already', 'Already found EXACT'),
         ('bonus', 'LUXE is a bonus word!'),
         ('not_a_word', 'ACED is not in this puzzle'),
+    ]
+
+
+@test
+def a_word_with_an_emoji_shows_it_when_found():
+    themed = (EXAMPLE.replace('EXACT', 'EXACT \U0001f3af')
+              .replace('TAXI', 'TAXI \U0001f695')
+              .replace('LUXE', 'LUXE \u2728'))
+    words = ['LUXE', 'EXACT', 'EXACT', 'TAXI']
+    with tempfile.TemporaryDirectory() as tmp:
+        (Path(tmp) / '2026-11-20.txt').write_text(themed, encoding='utf-8')
+        with site_server(puzzles_dir=Path(tmp)) as base:
+            with open_page(base) as page:
+                shown = [play(page, word)[1] for word in words]
+    assert shown == [
+        'LUXE is a bonus word! \u2728',
+        'Found EXACT! \U0001f3af',
+        'Already found EXACT',
+        'Found TAXI. \U0001f695 Puzzle complete!',
     ]
 
 

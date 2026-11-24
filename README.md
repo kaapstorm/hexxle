@@ -74,6 +74,11 @@ lines are ignored, so you can group words by length. Words are at least
 section does not count in the game, which is how you leave out a word
 you would rather the player did not need.
 
+A word may be followed by a space and an emoji, for example `RAIN 🌧️`,
+to mark it as part of the puzzle's theme. The emoji is shown in the
+message when the player finds the word. Only an emoji may follow a word:
+ASCII characters are an error.
+
 The player finishes the puzzle by finding every required word. Bonus
 words are counted but never needed.
 
